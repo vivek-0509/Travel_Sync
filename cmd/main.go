@@ -8,7 +8,7 @@ import (
 	routes2 "Travel_Sync/internal/security/routes"
 	securityService "Travel_Sync/internal/security/service"
 	"Travel_Sync/internal/server"
-	"Travel_Sync/internal/user/hander"
+	handler "Travel_Sync/internal/user/hander"
 	"Travel_Sync/internal/user/repository"
 	"Travel_Sync/internal/user/routes"
 	userService "Travel_Sync/internal/user/service"
