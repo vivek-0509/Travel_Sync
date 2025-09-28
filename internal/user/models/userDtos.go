@@ -7,5 +7,5 @@ type UserCreateDto struct {
 
 type UserUpdateDto struct {
 	Name        string `validate:"max=255"`
-	PhoneNumber *int   `validate:"phone"`
+	PhoneNumber string `validate:"phone"`
 }

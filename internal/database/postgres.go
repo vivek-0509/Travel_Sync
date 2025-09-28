@@ -2,9 +2,10 @@ package database
 
 import (
 	"Travel_Sync/internal/config"
+	"log"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 )
 
 func Connect(cfg *config.AppConfig) (*gorm.DB, error) {

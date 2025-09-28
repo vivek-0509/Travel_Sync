@@ -16,8 +16,8 @@ func FromUserUpdateDto(updateDto *models.UserUpdateDto, user *entity.User) *enti
 	if updateDto.Name != "" {
 		user.Name = updateDto.Name
 	}
-	if updateDto.PhoneNumber != nil {
-		user.PhoneNumber = *updateDto.PhoneNumber
+	if updateDto.PhoneNumber != "" {
+		user.PhoneNumber = updateDto.PhoneNumber
 	}
 	return user
 }
