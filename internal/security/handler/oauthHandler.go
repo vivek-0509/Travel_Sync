@@ -48,7 +48,6 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
 	//Set Jwt as HTTP-only cookie
 	c.SetCookie(
 		"jwt_token", // cookie name
