@@ -39,12 +39,13 @@ func main() {
 	oauth2Config := authConfig.GetGoogleOAuthConfig()
 
 	authService := securityService.NewAuthService(userService)
-	customOAuthService := securityService.NewCustomOAuth2Service(oauth2Config, authService)
+	jwtService := securityService.NewJWTService()
+	customOAuthService := securityService.NewCustomOAuth2Service(oauth2Config, authService, jwtService)
 	authHandler := handler2.NewOAuthHandler(customOAuthService)
 
 	ginEngine := server.NewGinRouter()
-	routes.RegisterUserRoutes(ginEngine, userHandler)
-	routes2.RegisterAuthRoutes(ginEngine, authHandler)
+	routes.RegisterUserRoutes(ginEngine, userHandler, jwtService)
+	routes2.RegisterAuthRoutes(ginEngine, authHandler, jwtService)
 
 	addr := ":" + cfg.Port
 	log.Printf("Listening on %s", addr)

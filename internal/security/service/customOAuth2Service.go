@@ -14,12 +14,14 @@ import (
 type CustomOAuth2Service struct {
 	OAuthConfig *oauth2.Config
 	AuthService *AuthService
+	JWTService  *JWTService
 }
 
-func NewCustomOAuth2Service(oauthConfig *oauth2.Config, authService *AuthService) *CustomOAuth2Service {
+func NewCustomOAuth2Service(oauthConfig *oauth2.Config, authService *AuthService, jwtService *JWTService) *CustomOAuth2Service {
 	return &CustomOAuth2Service{
 		OAuthConfig: oauthConfig,
 		AuthService: authService,
+		JWTService:  jwtService,
 	}
 }
 
@@ -61,13 +63,13 @@ func (service *CustomOAuth2Service) GoogleCallback(ctx context.Context, code str
 		return "", errors.New("login with your Scaler Student Email")
 	}
 
-	err = service.AuthService.GetOrCreateUser(googleUser.Email)
+	user, err := service.AuthService.GetOrCreateUser(googleUser.Email)
 	if err != nil {
 		return "", err
 	}
 
-	//Generate Jwt Token
-	jwtToken, err := CreateJWT(googleUser.Email)
+	//Generate Jwt Token with user ID
+	jwtToken, err := service.JWTService.CreateJWT(user.ID, googleUser.Email)
 	if err != nil {
 		return "", err
 	}

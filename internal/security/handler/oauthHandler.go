@@ -64,8 +64,40 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	if frontendURL == "" {
 		frontendURL = "http://localhost:3000" // dev fallback
 	}
-	c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/auth/success")
+	// c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/auth/success")
 
+}
+
+// Logout handler
+func (h *OAuthHandler) Logout(c *gin.Context) {
+	// Clear the JWT cookie
+	c.SetCookie(
+		"jwt_token", // cookie name
+		"",          // empty value
+		-1,          // max-age (negative means delete immediately)
+		"/",         // path
+		"",          // domain
+		false,       // secure
+		true,        // httpOnly
+	)
+
+	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+}
+
+// Get current user info
+func (h *OAuthHandler) GetCurrentUser(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	userEmail, _ := c.Get("user_email")
+
+	c.JSON(http.StatusOK, gin.H{
+		"user_id": userID,
+		"email":   userEmail,
+	})
 }
 
 func generateRandomState() string {
