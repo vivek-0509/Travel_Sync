@@ -2,34 +2,41 @@ package database
 
 import (
 	"Travel_Sync/internal/config"
-	"context"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"log"
-	"time"
 )
 
-type PostgresClient struct {
-	Pool *pgxpool.Pool
+func Connect(cfg *config.AppConfig) (*gorm.DB, error) {
+	db, err := gorm.Open(postgres.Open(cfg.PostgresURI), &gorm.Config{})
+	if err != nil {
+		return nil, err
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+
+	// Test connection
+	if err := sqlDB.Ping(); err != nil {
+		return nil, err
+	}
+
+	log.Println(" Connected to Postgres via GORM")
+	return db, nil
 }
 
-func Connect(cfg config.AppConfig) (*PostgresClient, error) {
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	pool, err := pgxpool.New(ctx, cfg.PostgresURI)
+func Disconnect(db *gorm.DB) {
+	sqlDB, err := db.DB()
 	if err != nil {
-		log.Fatalf("Error connecting to database: %v", err)
+		log.Println("Failed to get sql.DB for closing:", err)
+		return
 	}
 
-	if err := pool.Ping(ctx); err != nil {
-		log.Fatalf("Error pinging database: %v", err)
+	if err := sqlDB.Close(); err != nil {
+		log.Println("Failed to close database connection:", err)
+	} else {
+		log.Println("Database connection closed")
 	}
-
-	log.Println("Connected to database")
-
-	return &PostgresClient{
-		Pool: pool,
-	}, nil
-
 }
