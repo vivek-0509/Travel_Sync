@@ -15,9 +15,9 @@ func NewUserRepo(db *gorm.DB) *UserRepo {
 }
 
 // Create a new user
-func (r *UserRepo) Create(User *entity.User) (*entity.User, error) {
-	err := r.DB.Create(&User).Error
-	return User, err
+func (r *UserRepo) Create(user *entity.User) (*entity.User, error) {
+	err := r.DB.Create(&user).Error
+	return user, err
 }
 
 // GetById Get User by ID
@@ -35,8 +35,9 @@ func (r *UserRepo) GetAll() ([]entity.User, error) {
 }
 
 // Update User
-func (r *UserRepo) UpdateUser(user *entity.User) error {
-	return r.DB.Save(user).Error
+func (r *UserRepo) UpdateUser(user *entity.User) (*entity.User, error) {
+	err := r.DB.Save(user).Error
+	return user, err
 }
 
 // Delete User By ID

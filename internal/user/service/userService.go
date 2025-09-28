@@ -49,16 +49,16 @@ func (svc *UserService) DeleteByID(userID int) error {
 	return nil
 }
 
-func (svc *UserService) UpdateUser(userId int, updateDto *models.UserUpdateDto) error {
+func (svc *UserService) UpdateUser(userId int, updateDto *models.UserUpdateDto) (*entity.User, error) {
 	user, err := svc.Repo.GetByID(userId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	user = mapper.FromUserUpdateDto(updateDto, user)
 
-	err = svc.Repo.UpdateUser(user)
+	user, err = svc.Repo.UpdateUser(user)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return user, nil
 }
