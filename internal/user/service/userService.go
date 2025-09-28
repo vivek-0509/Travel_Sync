@@ -25,7 +25,7 @@ func (svc *UserService) CreateUser(createDto *models.UserCreateDto) (*entity.Use
 	return user, nil
 }
 
-func (svc *UserService) GetByID(userID int) (*entity.User, error) {
+func (svc *UserService) GetByID(userID int64) (*entity.User, error) {
 	user, err := svc.Repo.GetByID(userID)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (svc *UserService) GetAll() ([]entity.User, error) {
 	return users, nil
 }
 
-func (svc *UserService) DeleteByID(userID int) error {
+func (svc *UserService) DeleteByID(userID int64) error {
 	err := svc.Repo.Delete(userID)
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func (svc *UserService) DeleteByID(userID int) error {
 	return nil
 }
 
-func (svc *UserService) UpdateUser(userId int, updateDto *models.UserUpdateDto) (*entity.User, error) {
+func (svc *UserService) UpdateUser(userId int64, updateDto *models.UserUpdateDto) (*entity.User, error) {
 	user, err := svc.Repo.GetByID(userId)
 	if err != nil {
 		return nil, err

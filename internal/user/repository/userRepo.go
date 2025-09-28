@@ -21,7 +21,7 @@ func (r *UserRepo) Create(user *entity.User) (*entity.User, error) {
 }
 
 // GetById Get User by ID
-func (r *UserRepo) GetByID(userID int) (*entity.User, error) {
+func (r *UserRepo) GetByID(userID int64) (*entity.User, error) {
 	var user entity.User
 	err := r.DB.First(&user, userID).Error
 	return &user, err
@@ -41,6 +41,6 @@ func (r *UserRepo) UpdateUser(user *entity.User) (*entity.User, error) {
 }
 
 // Delete User By ID
-func (r *UserRepo) Delete(userID int) error {
+func (r *UserRepo) Delete(userID int64) error {
 	return r.DB.Delete(&entity.User{ID: userID}).Error
 }
