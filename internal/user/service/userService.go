@@ -62,3 +62,11 @@ func (svc *UserService) UpdateUser(userId int64, updateDto *models.UserUpdateDto
 	}
 	return user, nil
 }
+
+func (svc *UserService) GetUserByEmail(email string) (*entity.User, error) {
+	user, err := svc.Repo.GetUserByEmail(email)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}

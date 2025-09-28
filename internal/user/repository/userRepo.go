@@ -44,3 +44,10 @@ func (r *UserRepo) UpdateUser(user *entity.User) (*entity.User, error) {
 func (r *UserRepo) Delete(userID int64) error {
 	return r.DB.Delete(&entity.User{ID: userID}).Error
 }
+
+// Get user by email
+func (r *UserRepo) GetUserByEmail(email string) (*entity.User, error) {
+	var user entity.User
+	err := r.DB.First(&user, "email = ?", email).Error
+	return &user, err
+}
