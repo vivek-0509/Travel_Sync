@@ -15,8 +15,8 @@ func NewUserService(repo *repository.UserRepo) *UserService {
 	return &UserService{Repo: repo}
 }
 
-func (svc *UserService) CreateUser(createDto *models.UserCreateDto) (*entity.User, error) {
-	user := mapper.FromUserCreateDto(createDto)
+func (svc *UserService) CreateUser(email string) (*entity.User, error) {
+	user := mapper.FromUserEmail(email)
 	user, err := svc.Repo.Create(user)
 
 	if err != nil {

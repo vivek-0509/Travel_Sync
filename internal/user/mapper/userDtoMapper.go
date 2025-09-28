@@ -3,12 +3,13 @@ package mapper
 import (
 	"Travel_Sync/internal/user/entity"
 	"Travel_Sync/internal/user/models"
+	"strings"
 )
 
-func FromUserCreateDto(createDto *models.UserCreateDto) *entity.User {
+func FromUserEmail(email string) *entity.User {
 	return &entity.User{
-		Email: createDto.Email,
-		Batch: createDto.Batch,
+		Email: email,
+		Batch: ExtractBatch(email),
 	}
 }
 
@@ -20,4 +21,13 @@ func FromUserUpdateDto(updateDto *models.UserUpdateDto, user *entity.User) *enti
 		user.PhoneNumber = updateDto.PhoneNumber
 	}
 	return user
+}
+
+func ExtractBatch(email string) string {
+	parts := strings.Split(email, ".")
+	userNamePart := parts[1]
+
+	yearSuffix := userNamePart[:2]
+	batchStr := "Batch20" + yearSuffix
+	return batchStr
 }

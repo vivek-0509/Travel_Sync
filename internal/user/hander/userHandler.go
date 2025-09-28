@@ -31,21 +31,16 @@ func getIDParam(c *gin.Context) (int64, bool) {
 	return id, true
 }
 
-func (u *UserHandler) CreateUser(c *gin.Context) {
-	var dto models.UserCreateDto
-	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Invalid JSON payload"})
-		return
-	}
-
-	user, err := u.svc.CreateUser(&dto)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Failed to create user"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{"success": true, "user": user})
-}
+//func (u *UserHandler) CreateUser(c *gin.Context) {
+//
+//	user, err := u.svc.CreateUser(email)
+//	if err != nil {
+//		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Failed to create user"})
+//		return
+//	}
+//
+//	c.JSON(http.StatusCreated, gin.H{"success": true, "user": user})
+//}
 
 func (u *UserHandler) UpdateUser(c *gin.Context) {
 	id, ok := getIDParam(c)

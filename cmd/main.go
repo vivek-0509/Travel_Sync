@@ -3,15 +3,26 @@ package main
 import (
 	"Travel_Sync/internal/config"
 	"Travel_Sync/internal/database"
+	"Travel_Sync/internal/security/authConfig"
+	handler2 "Travel_Sync/internal/security/handler"
+	routes2 "Travel_Sync/internal/security/routes"
+	securityService "Travel_Sync/internal/security/service"
 	"Travel_Sync/internal/server"
 	"Travel_Sync/internal/user/hander"
 	"Travel_Sync/internal/user/repository"
 	"Travel_Sync/internal/user/routes"
-	"Travel_Sync/internal/user/service"
+	userService "Travel_Sync/internal/user/service"
 	"log"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load env first
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, reading from system env")
+	}
+
 	cfg := config.LoadConfig()
 
 	db, err := database.Connect(cfg)
@@ -22,11 +33,18 @@ func main() {
 	defer database.Disconnect(db) //  ensures DB is closed on exit
 
 	userRepo := repository.NewUserRepo(db)
-	userService := service.NewUserService(userRepo)
+	userService := userService.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userService)
+
+	oauth2Config := authConfig.GetGoogleOAuthConfig()
+
+	authService := securityService.NewAuthService(userService)
+	customOAuthService := securityService.NewCustomOAuth2Service(oauth2Config, authService)
+	authHandler := handler2.NewOAuthHandler(customOAuthService)
 
 	ginEngine := server.NewGinRouter()
 	routes.RegisterUserRoutes(ginEngine, userHandler)
+	routes2.RegisterAuthRoutes(ginEngine, authHandler)
 
 	addr := ":" + cfg.Port
 	log.Printf("Listening on %s", addr)

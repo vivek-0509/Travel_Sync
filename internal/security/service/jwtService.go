@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -8,13 +9,20 @@ import (
 )
 
 func CreateJWT(email string) (string, error) {
-	claims := jwt.MapClaims{}
-	claims["sub"] = email
-	claims["exp"] = time.Now().Add(time.Hour * 192).Unix()
+	claims := jwt.RegisteredClaims{
+		Subject:   email,
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(192 * time.Hour)), // 8 days
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		return "", fmt.Errorf("JWT_SECRET not set")
+	}
+	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
-		return "Failed to Create jwt token", err
+		return "", err
 	}
 	return tokenString, nil
 }
