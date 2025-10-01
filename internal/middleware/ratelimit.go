@@ -25,13 +25,13 @@ var (
 	}
 
 	GeneralRateLimit = RateLimitConfig{
-		Rate:   "100-H", // 100 requests per hour for general endpoints
+		Rate:   "800-H", // 100 requests per hour for general endpoints
 		Burst:  200,
 		Prefix: "general",
 	}
 
 	RecommendationRateLimit = RateLimitConfig{
-		Rate:   "20-M", // 20 requests per minute for recommendations
+		Rate:   "2000-M", // 20 requests per minute for recommendations
 		Burst:  30,
 		Prefix: "recommend",
 	}
