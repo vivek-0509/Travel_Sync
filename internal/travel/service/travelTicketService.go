@@ -37,6 +37,15 @@ func (s *TravelTicketService) Create(userID int64, dto *models.TravelTicketCreat
 	if ticket.PhoneNumber == "" {
 		ticket.PhoneNumber = user.PhoneNumber
 	}
+	// Ensure user has no other ticket on the same date
+	day := time.Date(ticket.DepartureAt.Year(), ticket.DepartureAt.Month(), ticket.DepartureAt.Day(), 0, 0, 0, 0, ticket.DepartureAt.Location())
+	exists, err := s.Repo.ExistsForUserOnDate(userID, day, nil)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, errors.New("ticket already exists for this date")
+	}
 	created, err := s.Repo.Create(ticket)
 	if err != nil {
 		return nil, err
@@ -61,6 +70,16 @@ func (s *TravelTicketService) Update(currentUserID int64, id int64, dto *models.
 		return nil, errors.New("forbidden")
 	}
 	ticket = mapper.ApplyUpdateDtoToEntity(dto, ticket)
+	// If departure time changed (or even if not), enforce single ticket per date
+	day := time.Date(ticket.DepartureAt.Year(), ticket.DepartureAt.Month(), ticket.DepartureAt.Day(), 0, 0, 0, 0, ticket.DepartureAt.Location())
+	excludeID := id
+	exists, err := s.Repo.ExistsForUserOnDate(currentUserID, day, &excludeID)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, errors.New("ticket already exists for this date")
+	}
 	updated, err := s.Repo.Update(ticket)
 	if err != nil {
 		return nil, err

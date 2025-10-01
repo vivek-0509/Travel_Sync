@@ -31,7 +31,7 @@ var (
 	}
 
 	RecommendationRateLimit = RateLimitConfig{
-		Rate:   "2000-M", // 20 requests per minute for recommendations
+		Rate:   "200-M", // 20 requests per minute for recommendations
 		Burst:  30,
 		Prefix: "recommend",
 	}

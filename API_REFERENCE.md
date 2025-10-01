@@ -171,6 +171,9 @@ POST `/api/travel`
 ```json
 { "success": false, "error": "invalid request body" }
 ```
+```json
+{ "success": false, "error": "ticket already exists for this date" }
+```
 
 ### List Tickets
 GET `/api/travel`
@@ -234,6 +237,9 @@ PUT `/api/travel/:id`
 ```
 ```json
 { "success": false, "error": "..." }
+```
+```json
+{ "success": false, "error": "ticket already exists for this date" }
 ```
 
 ### Delete Ticket
