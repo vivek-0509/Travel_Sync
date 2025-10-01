@@ -71,8 +71,8 @@ func (r *TravelTicketRepo) GetCandidatesSameDateOutbound(destination string, day
 	} else {
 		q = q.Where("destination = ?", destination)
 	}
-	err := q.Where("departure_at >= ? AND departure_at < ? AND id <> ?",
-		dayStart, dayEnd, excludeID).Find(&tickets).Error
+	err := q.Where("status = ? AND departure_at >= ? AND departure_at < ? AND id <> ?",
+		"open", dayStart, dayEnd, excludeID).Find(&tickets).Error
 	return tickets, err
 }
 
@@ -89,7 +89,7 @@ func (r *TravelTicketRepo) GetCandidatesSameDateReturn(source string, dayStart t
 	} else {
 		q = q.Where("source = ?", source)
 	}
-	err := q.Where("departure_at >= ? AND departure_at < ? AND id <> ?",
-		dayStart, dayEnd, excludeID).Find(&tickets).Error
+	err := q.Where("status = ? AND departure_at >= ? AND departure_at < ? AND id <> ?",
+		"open", dayStart, dayEnd, excludeID).Find(&tickets).Error
 	return tickets, err
 }

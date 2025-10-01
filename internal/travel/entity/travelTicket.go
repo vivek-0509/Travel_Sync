@@ -11,6 +11,7 @@ type TravelTicket struct {
 	TimeDiffMins int       `gorm:"not null" json:"time_diff_mins"`
 	UserID       int64     `gorm:"not null" json:"user_id"`
 	PhoneNumber  string    `gorm:"size:15;not null" json:"phone_number"`
+	Status       string    `gorm:"type:varchar(20);not null;default:open" json:"status"`
 	CreatedAt    time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt    time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }

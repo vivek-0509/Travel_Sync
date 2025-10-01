@@ -16,6 +16,7 @@ type TravelTicketUpdateDto struct {
 	TimeDiffMins int    `json:"time_diff_mins"`
 	EmptySeats   int    `json:"empty_seats"`
 	PhoneNumber  string `json:"phone_number"`
+	Status       string `json:"status"` // "open" or "closed"
 }
 
 type TravelTicketUserResponseDto struct {

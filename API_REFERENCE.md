@@ -159,6 +159,7 @@ POST `/api/travel`
   "time_diff_mins": 30,
   "user_id": 123,
   "phone_number": "9876543210",
+  "status": "open",
   "created_at": "2025-10-01T10:00:00Z",
   "updated_at": "2025-10-01T10:00:00Z"
 } }
@@ -210,12 +211,13 @@ PUT `/api/travel/:id`
   "departure_at": "2025-10-02T14:30:00Z",
   "time_diff_mins": 45,
   "empty_seats": 3,
-  "phone_number": "9876543210"
+  "phone_number": "9876543210",
+  "status": "closed"
 }
 ```
 - Response 200:
 ```json
-{ "success": true, "data": { "id": 10, "source": "BLR", "destination": "GOI", "empty_seats": 3, "departure_at": "2025-10-02T14:30:00Z", "time_diff_mins": 45, "user_id": 123, "phone_number": "9876543210", "created_at": "2025-10-01T10:00:00Z", "updated_at": "2025-10-02T10:00:00Z" } }
+{ "success": true, "data": { "id": 10, "source": "BLR", "destination": "GOI", "empty_seats": 3, "departure_at": "2025-10-02T14:30:00Z", "time_diff_mins": 45, "user_id": 123, "phone_number": "9876543210", "status": "closed", "created_at": "2025-10-01T10:00:00Z", "updated_at": "2025-10-02T10:00:00Z" } }
 ```
 - Errors 400/500:
 ```json
@@ -240,6 +242,7 @@ DELETE `/api/travel/:id`
 ### Get Recommendations (Rate Limited)
 GET `/api/travel/:id/recommendations`
 - Params: `id` (int)
+- Behavior: only considers tickets with `status = "open"` as candidates
 - Response 200:
 ```json
 { "success": true, "data": {

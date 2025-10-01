@@ -20,6 +20,7 @@ func FromCreateDtoToEntity(dto *models.TravelTicketCreateDto, user *uentity.User
 		TimeDiffMins: dto.TimeDiffMins,
 		UserID:       user.ID,
 		PhoneNumber:  dto.PhoneNumber,
+		Status:       "open",
 	}, nil
 }
 
@@ -44,6 +45,9 @@ func ApplyUpdateDtoToEntity(dto *models.TravelTicketUpdateDto, ticket *tentity.T
 	if dto.PhoneNumber != "" {
 		ticket.PhoneNumber = dto.PhoneNumber
 	}
+	if dto.Status != "" {
+		ticket.Status = dto.Status
+	}
 	return ticket
 }
 
@@ -60,3 +64,5 @@ func ToUserResponseDto(ticket *tentity.TravelTicket, user *uentity.User) *models
 		PhoneNumber:  ticket.PhoneNumber,
 	}
 }
+
+// no defaultStatus helper needed once create always sets to "open"
