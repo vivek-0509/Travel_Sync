@@ -8,6 +8,10 @@ import (
 	routes2 "Travel_Sync/internal/security/routes"
 	securityService "Travel_Sync/internal/security/service"
 	"Travel_Sync/internal/server"
+	travelHandler "Travel_Sync/internal/travel/handler"
+	travelRepo "Travel_Sync/internal/travel/repository"
+	travelRoutes "Travel_Sync/internal/travel/routes"
+	travelService "Travel_Sync/internal/travel/service"
 	handler "Travel_Sync/internal/user/hander"
 	"Travel_Sync/internal/user/repository"
 	"Travel_Sync/internal/user/routes"
@@ -18,9 +22,9 @@ import (
 )
 
 func main() {
-	// Load env  first
+	// Load env first
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, reading from system")
+		log.Println("No .env file found, reading from system env")
 	}
 
 	cfg := config.LoadConfig()
@@ -30,11 +34,16 @@ func main() {
 		log.Fatalf("Failed to connect to PostgresDB: %v", err)
 	}
 
-	defer database.Disconnect(db) //  ensures  DB is closed on exit
+	defer database.Disconnect(db) //  ensures DB is closed on exit
 
 	userRepo := repository.NewUserRepo(db)
 	userService := userService.NewUserService(userRepo)
 	userHandler := handler.NewUserHandler(userService)
+
+	// Travel wiring
+	tRepo := travelRepo.NewTravelTicketRepo(db)
+	tSvc := travelService.NewTravelTicketService(tRepo, userRepo)
+	tHandler := travelHandler.NewTravelTicketHandler(tSvc)
 
 	oauth2Config := authConfig.GetGoogleOAuthConfig()
 
@@ -45,6 +54,7 @@ func main() {
 
 	ginEngine := server.NewGinRouter()
 	routes.RegisterUserRoutes(ginEngine, userHandler, jwtService)
+	travelRoutes.RegisterTravelRoutes(ginEngine, tHandler, jwtService)
 	routes2.RegisterAuthRoutes(ginEngine, authHandler, jwtService)
 
 	addr := ":" + cfg.Port
