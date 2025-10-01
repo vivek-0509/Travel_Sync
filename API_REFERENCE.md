@@ -258,8 +258,8 @@ GET `/api/travel/:id/recommendations`
 - Response 200:
 ```json
 { "success": true, "data": {
-  "best_match": { "ticket": { "id": 11, "source": "BLR", "destination": "GOI", "empty_seats": 1, "departure_at": "2025-10-01T16:00:00Z", "time_diff_mins": 15, "user_id": 999, "phone_number": "9876543211", "created_at": "2025-10-01T10:00:00Z", "updated_at": "2025-10-01T10:00:00Z" }, "score": 0.92, "date": "2025-10-01", "time": "16:00" },
-  "best_group": [ { "ticket": { "id": 12, "source": "BLR", "destination": "GOI", "empty_seats": 2, "departure_at": "2025-10-01T16:15:00Z", "time_diff_mins": 20, "user_id": 1000, "phone_number": "9876543212", "created_at": "2025-10-01T10:00:00Z", "updated_at": "2025-10-01T10:00:00Z" }, "score": 0.85, "date": "2025-10-01", "time": "16:15" } ],
+  "best_match": { "ticket": { "id": 11, "source": "BLR", "destination": "GOI", "empty_seats": 1, "departure_at": "2025-10-01T16:00:00Z", "time_diff_mins": 15, "user_id": 999, "phone_number": "9876543211", "created_at": "2025-10-01T10:00:00Z", "updated_at": "2025-10-01T10:00:00Z" }, "score": 0.92, "date": "2025-10-01", "time": "16:00", "user": { "name": "Bob", "batch": "2025" } },
+  "best_group": [ { "ticket": { "id": 12, "source": "BLR", "destination": "GOI", "empty_seats": 2, "departure_at": "2025-10-01T16:15:00Z", "time_diff_mins": 20, "user_id": 1000, "phone_number": "9876543212", "created_at": "2025-10-01T10:00:00Z", "updated_at": "2025-10-01T10:00:00Z" }, "score": 0.85, "date": "2025-10-01", "time": "16:15", "user": { "name": "Charlie", "batch": "2024" } } ],
   "other_alternatives": []
 } }
 ```
