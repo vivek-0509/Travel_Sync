@@ -16,7 +16,12 @@ import (
 	"Travel_Sync/internal/user/repository"
 	"Travel_Sync/internal/user/routes"
 	userService "Travel_Sync/internal/user/service"
+	"context"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/joho/godotenv"
 )
@@ -59,6 +64,26 @@ func main() {
 
 	addr := ":" + cfg.Port
 	log.Printf("Listening on %s", addr)
+
+	srv := &http.Server{Addr: addr, Handler: ginEngine}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
+
+	// Graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), server.ShutdownTimeout())
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+	log.Println("Server exiting")
 	if err := ginEngine.Run(addr); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}

@@ -43,32 +43,35 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 
 	code := c.Query("code")
 
-    jwtToken, created, err := h.CustomOAuth2Service.GoogleCallback(c.Request.Context(), code)
+	jwtToken, created, err := h.CustomOAuth2Service.GoogleCallback(c.Request.Context(), code)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	//Set Jwt as HTTP-only cookie
+	// Configure cookie for production readiness
+	secure := os.Getenv("COOKIE_SECURE") == "true"
+	domain := os.Getenv("COOKIE_DOMAIN")
 	c.SetCookie(
-		"jwt_token", // cookie name
-		jwtToken,    // value
-		3600*24*8,   // max-age in seconds (here 8 day)
-		"/",         // path
-		"",          // domain (empty means current domain)
-		false,       // secure (true if using HTTPS)
-		true,        // httpOnly (cannot be accessed by JS)
+		"jwt_token",
+		jwtToken,
+		3600*24*8,
+		"/",
+		domain,
+		secure,
+		true,
 	)
 
-    // redirect to frontend app success page (prefer env var)
-    frontendURL := os.Getenv("FRONTEND_URL")
-    if frontendURL == "" {
-        frontendURL = "http://localhost:3000" // dev fallback
-    }
-    redirectURL := frontendURL + "/auth/success"
-    if created {
-        redirectURL += "?new=1"
-    }
-    c.Redirect(http.StatusTemporaryRedirect, redirectURL)
+	// redirect to frontend app success page (prefer env var)
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:3000" // dev fallback
+	}
+	redirectURL := frontendURL + "/auth/success"
+	if created {
+		redirectURL += "?new=1"
+	}
+	c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 
 }
 

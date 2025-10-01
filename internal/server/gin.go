@@ -2,17 +2,31 @@ package server
 
 import (
 	"net/http"
+	"time"
 
+	"Travel_Sync/internal/config"
 	"Travel_Sync/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
 func NewGinRouter() *gin.Engine {
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(gin.Logger())
+
+	// Set Gin mode via env
+	if cfg := config.LoadConfig(); cfg.GinMode != "" {
+		gin.SetMode(cfg.GinMode)
+	}
+	appCfg := config.LoadConfig()
+	// Trusted proxies (e.g., AWS Load Balancer)
+	if len(appCfg.TrustedProxies) > 0 {
+		_ = r.SetTrustedProxies(appCfg.TrustedProxies)
+	}
 
 	// Add CORS middleware
-	r.Use(middleware.SetupCORS())
+	r.Use(middleware.SetupCORS(appCfg))
 
 	// Add global rate limiting
 	r.Use(middleware.GeneralRateLimiter())
@@ -27,3 +41,6 @@ func NewGinRouter() *gin.Engine {
 
 	return r
 }
+
+// ShutdownTimeout returns the time to wait for graceful shutdown
+func ShutdownTimeout() time.Duration { return 10 * time.Second }
