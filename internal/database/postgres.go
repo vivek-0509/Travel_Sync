@@ -2,6 +2,7 @@ package database
 
 import (
 	"Travel_Sync/internal/config"
+	tentity "Travel_Sync/internal/travel/entity"
 	"log"
 
 	"gorm.io/driver/postgres"
@@ -21,6 +22,11 @@ func Connect(cfg *config.AppConfig) (*gorm.DB, error) {
 
 	// Test connection
 	if err := sqlDB.Ping(); err != nil {
+		return nil, err
+	}
+
+	// Automigrate schemas
+	if err := db.AutoMigrate(&tentity.TravelTicket{}); err != nil {
 		return nil, err
 	}
 
