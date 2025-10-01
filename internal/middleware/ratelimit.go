@@ -19,19 +19,19 @@ type RateLimitConfig struct {
 var (
 	// Default rate limiters
 	AuthRateLimit = RateLimitConfig{
-		Rate:   "100-M", // 5 requests per minute for auth endpoints
+		Rate:   "5-M", // 5 requests per minute for auth endpoints
 		Burst:  10,
 		Prefix: "auth",
 	}
 
 	GeneralRateLimit = RateLimitConfig{
-		Rate:   "800-H", // 100 requests per hour for general endpoints
+		Rate:   "500-H", // 100 requests per hour for general endpoints
 		Burst:  200,
 		Prefix: "general",
 	}
 
 	RecommendationRateLimit = RateLimitConfig{
-		Rate:   "200-M", // 20 requests per minute for recommendations
+		Rate:   "25-M", // 20 requests per minute for recommendations
 		Burst:  30,
 		Prefix: "recommend",
 	}
