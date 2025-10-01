@@ -64,7 +64,7 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	if frontendURL == "" {
 		frontendURL = "http://localhost:3000" // dev fallback
 	}
-	// c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/auth/success")
+	c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/auth/success")
 
 }
 
