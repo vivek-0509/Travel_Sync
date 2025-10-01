@@ -3,11 +3,19 @@ package server
 import (
 	"net/http"
 
+	"Travel_Sync/internal/middleware"
+
 	"github.com/gin-gonic/gin"
 )
 
 func NewGinRouter() *gin.Engine {
 	r := gin.Default()
+
+	// Add CORS middleware
+	r.Use(middleware.SetupCORS())
+
+	// Add global rate limiting
+	r.Use(middleware.GeneralRateLimiter())
 
 	// Add health check endpoint (no authentication required)
 	r.GET("/health", func(c *gin.Context) {
