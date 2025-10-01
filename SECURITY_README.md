@@ -4,18 +4,31 @@ This document explains the security implementation for the Travel Sync applicati
 
 ## Overview
 
-The application uses Google OAuth2 for authentication with JWT tokens for session management. Only users with `sst.scaler.com` email domain are allowed to authenticate.
+- Google OAuth2 for authentication
+- JWT for session management (cookie `jwt_token`, HTTP-only)
+- JWT middleware injects `user_id`, `user_email`, and `jwt_claims` into context
+- CORS enabled for localhost development origins with credentials
 
-## Security Flow
+## Auth Flow
 
-1. **User Login**: User clicks "Login with Google" → redirected to Google OAuth
-2. **Domain Validation**: Only `sst.scaler.com` emails are accepted
-3. **User Creation**: First-time users are automatically created in the database
-4. **JWT Generation**: JWT token is generated with user ID and email
-5. **Cookie Storage**: JWT is stored in HTTP-only cookie
-6. **Route Protection**: Protected routes require valid JWT token
+1. User visits `/auth/google/login` → redirected to Google with a CSRF-protecting `state` cookie
+2. Callback `/auth/google/callback` exchanges code, issues JWT, sets `jwt_token` (HTTP-only), and redirects to `FRONTEND_URL`
+3. Client sends cookie automatically on subsequent requests
 
-## Environment Variables Required
+## JWT Details
+
+- Algorithm: HS256
+- Claims: `user_id`, `email`, standard registered claims
+- Expiration: 8 days
+- Middleware: `internal/security/config/jwtMiddleware.go`
+
+### Middleware behavior
+- Reads token from `jwt_token` cookie
+- Validates signature using `JWT_SECRET`
+- On success: sets `user_id`, `user_email`, `jwt_claims` in Gin context
+- On failure: 401 JSON error and abort
+
+## Environment Variables
 
 ```bash
 # Google OAuth Configuration
@@ -29,29 +42,35 @@ JWT_SECRET=your_jwt_secret_key
 FRONTEND_URL=http://localhost:3000
 ```
 
-## API Endpoints
+## Endpoints
 
-### Public Endpoints (No Authentication Required)
+Public:
+- GET `/health`
+- GET `/auth/google/login`
+- GET `/auth/google/callback`
+- POST `/auth/logout`
 
-- `GET /health` - Health check
-- `GET /auth/google/login` - Initiate Google OAuth login
-- `GET /auth/google/callback` - Google OAuth callback
-- `POST /auth/logout` - Logout (clears JWT cookie)
+Protected (JWT required):
+- GET `/auth/me`
+- All `/api/user/*`
+- All `/api/travel/*`
 
-### Protected Endpoints (Authentication Required)
+## CORS
 
-- `GET /auth/me` - Get current user information
-- `GET /api/user/:id` - Get user by ID
-- `PUT /api/user/:id` - Update user
-- `DELETE /api/user/:id` - Delete user
-- `GET /api/user/getAll/:id` - Get all users
+`internal/middleware/cors.go` allows localhost origins (`3000`, `8080`, and `127.0.0.1` variants), methods GET/POST/PUT/DELETE/OPTIONS, common headers, and credentials.
 
-## Usage Examples
+## Production Hardening
 
-### Protecting Routes
+- Serve over HTTPS and set cookie `Secure=true`
+- Rotate `JWT_SECRET` using a proper secret manager
+- Restrict OAuth redirect URIs to trusted origins only
+- Validate inputs and enforce payload size limits
+- Minimize PII in logs; never log tokens
 
+## Examples
+
+Protect routes:
 ```go
-// Apply JWT middleware to a route group
 protected := router.Group("/api")
 protected.Use(config.JWTMiddleware(jwtService))
 {
@@ -59,127 +78,11 @@ protected.Use(config.JWTMiddleware(jwtService))
 }
 ```
 
-### Getting Current User in Handlers
-
+Access current user in handlers:
 ```go
 func ProtectedHandler(c *gin.Context) {
-    // Get user ID from context
-    userID, err := config.GetUserIDFromContext(c)
-    if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-        return
-    }
-    
-    // Get user email from context
-    email, err := config.GetUserEmailFromContext(c)
-    if err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-        return
-    }
-    
-    // Use user information
-    c.JSON(http.StatusOK, gin.H{
-        "user_id": userID,
-        "email": email,
-    })
+    userID, _ := c.Get("user_id")
+    userEmail, _ := c.Get("user_email")
+    c.JSON(200, gin.H{"user_id": userID, "email": userEmail})
 }
-```
-
-### Optional Authentication
-
-```go
-// Use OptionalJWTMiddleware for routes that work with or without authentication
-optional := router.Group("/api")
-optional.Use(config.OptionalJWTMiddleware(jwtService))
-{
-    optional.GET("/public-or-private", handler.OptionalAuthHandler)
-}
-```
-
-## JWT Token Structure
-
-```json
-{
-  "user_id": 123,
-  "email": "user@sst.scaler.com",
-  "sub": "user@sst.scaler.com",
-  "exp": 1234567890,
-  "iat": 1234567890
-}
-```
-
-## Security Features
-
-1. **Domain Restriction**: Only `sst.scaler.com` emails allowed
-2. **HTTP-Only Cookies**: JWT tokens stored in HTTP-only cookies (not accessible via JavaScript)
-3. **Token Expiration**: JWT tokens expire after 8 days
-4. **State Parameter**: OAuth state parameter prevents CSRF attacks
-5. **Secure Cookie Settings**: Cookies are configured for security
-
-## Testing the Security
-
-### 1. Test Health Check
-```bash
-curl http://localhost:8080/health
-```
-
-### 2. Test Login Flow
-1. Visit `http://localhost:8080/auth/google/login`
-2. Complete Google OAuth flow
-3. Should redirect to frontend with JWT cookie set
-
-### 3. Test Protected Endpoint
-```bash
-# This should fail without authentication
-curl http://localhost:8080/auth/me
-
-# This should work after login (cookie will be set)
-curl -b "jwt_token=your_jwt_token" http://localhost:8080/auth/me
-```
-
-### 4. Test Logout
-```bash
-curl -X POST http://localhost:8080/auth/logout
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **"JWT_SECRET not set"**: Set the JWT_SECRET environment variable
-2. **"login with your Scaler Student Email"**: User must use `@sst.scaler.com` email
-3. **"JWT token not found in cookies"**: User needs to login first
-4. **"Invalid JWT token"**: Token may be expired or tampered with
-
-### Debug Mode
-
-To enable debug logging, set:
-```bash
-GIN_MODE=debug
-```
-
-## Security Best Practices
-
-1. **Environment Variables**: Never commit secrets to version control
-2. **HTTPS in Production**: Use HTTPS in production and set `secure=true` for cookies
-3. **Token Rotation**: Consider implementing token refresh mechanism
-4. **Rate Limiting**: Implement rate limiting for authentication endpoints
-5. **Logging**: Log authentication attempts and failures
-6. **CORS**: Configure CORS properly for your frontend domain
-
-## File Structure
-
-```
-internal/security/
-├── config/
-│   ├── jwtMiddleware.go    # JWT authentication middleware
-│   └── authHelpers.go      # Helper functions for auth
-├── handler/
-│   └── oauthHandler.go     # OAuth login/logout handlers
-├── service/
-│   ├── authService.go      # User authentication service
-│   ├── jwtService.go       # JWT token service
-│   └── customOAuth2Service.go # Google OAuth service
-└── routes/
-    └── authRoutes.go       # Authentication routes
 ```
