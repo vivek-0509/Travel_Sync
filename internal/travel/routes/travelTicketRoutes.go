@@ -16,6 +16,7 @@ func RegisterTravelRoutes(router *gin.Engine, handler *thandler.TravelTicketHand
 	{
 		travel.POST("", handler.Create)
 		travel.GET("", handler.GetAll)
+		travel.GET("/my", handler.GetMyTickets)
 		travel.GET("/:id", handler.GetByID)
 		travel.PUT("/:id", handler.Update)
 		travel.DELETE("/:id", handler.Delete)

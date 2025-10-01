@@ -97,6 +97,11 @@ func (s *TravelTicketService) GetUserResponses(userID int64) ([]*models.TravelTi
 	return responses, nil
 }
 
+// GetByUser returns all tickets created by the specified user
+func (s *TravelTicketService) GetByUser(userID int64) ([]tentity.TravelTicket, error) {
+	return s.Repo.GetByUserID(userID)
+}
+
 // RecommendForTicket computes best match, best group, and other alternatives
 func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.RecommendationResult, error) {
 	t, err := s.Repo.GetByID(ticketID)

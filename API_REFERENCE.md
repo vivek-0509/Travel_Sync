@@ -185,6 +185,15 @@ GET `/api/travel`
 { "success": false, "error": "failed to fetch tickets" }
 ```
 
+### Get My Tickets
+GET `/api/travel/my`
+- Response 200:
+```json
+{ "success": true, "data": [
+  { "id": 10, "source": "BLR", "destination": "GOI", "empty_seats": 2, "departure_at": "2025-10-01T14:30:00Z", "time_diff_mins": 30, "user_id": 123, "phone_number": "9876543210", "status": "open", "created_at": "2025-10-01T10:00:00Z", "updated_at": "2025-10-01T10:00:00Z" }
+] }
+```
+
 ### Get Ticket By ID
 GET `/api/travel/:id`
 - Params: `id` (int)

@@ -92,6 +92,32 @@ func (h *TravelTicketHandler) GetAll(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": tickets})
 }
 
+// GetMyTickets returns all tickets created by the authenticated user
+func (h *TravelTicketHandler) GetMyTickets(c *gin.Context) {
+	uid, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "unauthorized"})
+		return
+	}
+	var userID int64
+	switch v := uid.(type) {
+	case int64:
+		userID = v
+	case float64:
+		userID = int64(v)
+	default:
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "invalid user context"})
+		return
+	}
+
+	tickets, err := h.Svc.GetByUser(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": tickets})
+}
+
 func (h *TravelTicketHandler) Update(c *gin.Context) {
 	id, ok := parseID(c)
 	if !ok {
