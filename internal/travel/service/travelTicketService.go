@@ -132,9 +132,24 @@ func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.Recomm
 	}
 	candidates = filteredCandidates
 
-	// Score all candidates
+	// Score all candidates, but only within the asymmetric time window
+	beforeWindow := time.Duration(t.TimeDiffMins) * time.Minute
+	afterWindow := 60 * time.Minute
 	scored := make([]models.ScoredTicket, 0, len(candidates))
 	for _, c := range candidates {
+		delta := c.DepartureAt.Sub(t.DepartureAt)
+		if delta <= 0 {
+			// Candidate leaves before or at the same time as target
+			if absDuration(delta) > beforeWindow {
+				continue
+			}
+		} else {
+			// Candidate leaves after target
+			if delta > afterWindow {
+				continue
+			}
+		}
+
 		score := s.scoreTicket(*t, c)
 		scored = append(scored, models.ScoredTicket{
 			Ticket: c,
@@ -151,8 +166,10 @@ func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.Recomm
 		result.BestMatch = &scored[0]
 	}
 
-	// Build Best Group: greedy, 2-hour window around anchor, max 6 users
+	// Build Best Group: greedy, asymmetric window (before: TimeDiffMins; after: 60m)
 	group := make([]models.ScoredTicket, 0, 4)
+	timeWindowBefore := beforeWindow
+	timeWindowAfter := afterWindow
 	for _, sct := range scored {
 		if len(group) >= 4 {
 			break
@@ -161,8 +178,15 @@ func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.Recomm
 		if c == nil {
 			continue
 		}
-		if absDuration(c.DepartureAt.Sub(t.DepartureAt)) <= 2*time.Hour {
-			group = append(group, sct)
+		delta := c.DepartureAt.Sub(t.DepartureAt)
+		if delta <= 0 {
+			if absDuration(delta) <= timeWindowBefore {
+				group = append(group, sct)
+			}
+		} else {
+			if delta <= timeWindowAfter {
+				group = append(group, sct)
+			}
 		}
 	}
 	if len(group) >= 2 {

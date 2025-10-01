@@ -242,7 +242,10 @@ DELETE `/api/travel/:id`
 ### Get Recommendations (Rate Limited)
 GET `/api/travel/:id/recommendations`
 - Params: `id` (int)
-- Behavior: only considers tickets with `status = "open"` as candidates
+- Behavior: only considers tickets with `status = "open"` as candidates; the matching time window is determined by the target ticket's `time_diff_mins` (± that many minutes around its `departure_at`)
+ - Behavior: only considers tickets with `status = "open"` as candidates; asymmetric time window:
+   - Before target departure: within `time_diff_mins` minutes
+   - After target departure: within 60 minutes
 - Response 200:
 ```json
 { "success": true, "data": {
