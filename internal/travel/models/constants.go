@@ -2,13 +2,13 @@ package models
 
 var (
 	Hostels = map[string]struct{}{
-		"Uniworld1": {},
-		"Uniworld2": {},
+		"Uniworld-1": {},
+		"Uniworld-2": {},
 	}
 
 	AirportTerminals = map[string]struct{}{
-		"Terminal1": {},
-		"Terminal2": {},
+		"Kempegowda International Airport Terminal-1": {},
+		"Kempegowda International Airport Terminal-2": {},
 	}
 
 	RailwayStations = map[string]struct{}{
