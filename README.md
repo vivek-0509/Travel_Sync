@@ -1,10 +1,44 @@
-# Travel Sync API
+# Travel Sync
 
-Find your travel buddy. This service exposes RESTful APIs for authentication, users, and travel tickets.
+Find your travel buddy. Travel Sync lets students post upcoming trips and discover compatible co-travelers based on time, origin/destination, and preferences. It uses Google OAuth2 for login, JWT cookies for sessions, and a recommendation engine with rate limiting.
 
-## Quick Start
+## What this app does
 
-1. Create a `.env` with required variables:
+- Create a travel ticket with origin, destination, departure time, empty seats, and contact.
+- Discover recommendations to form a group. Tickets “close” once a group is formed, so they’re no longer suggested.
+- Manage your tickets and profile. You can only modify your own data.
+
+## How it works (flow)
+
+1. User clicks Login → `GET /auth/google/login` (Google OAuth).
+2. Callback sets an HTTP-only cookie `jwt_token` and redirects to the frontend.
+3. User creates a ticket → `POST /api/travel` (status defaults to `open`).
+4. Recommendation engine finds matching tickets:
+   - Excludes `closed` tickets and your own tickets
+   - Asymmetric time window: before within your `time_diff_mins`, after within 60 minutes
+   - Returns scored results with minimal owner info (name, batch), without revealing ticket/user IDs
+5. When a group is formed, ticket owner sets `status` to `closed` to stop new requests.
+
+## Features
+
+- Google OAuth2 + JWT cookie auth
+- Tickets CRUD with ownership checks (only owners can update/delete)
+- Recommendation engine with asymmetric time window and redacted result fields
+- CORS and rate limiting (global, auth-specific, recommendations-specific)
+
+## Architecture
+
+- Gin HTTP server, layered into routes → handlers → services → repositories
+- PostgreSQL via GORM (auto-migrations)
+- Middlewares: CORS, JWT auth, rate limiting
+
+## Tech stack
+
+- Go, Gin, GORM, Google OAuth2, golang-jwt, ulule/limiter
+
+## Setup
+
+1. Create a `.env` file:
 ```bash
 PORT=8080
 DATABASE_URL=postgres://user:pass@localhost:5432/travel_sync?sslmode=disable
@@ -22,65 +56,13 @@ go run ./cmd
 curl http://localhost:8080/health
 ```
 
-## Global Middleware
+## Developer docs
 
-- CORS: allows localhost origins, credentials enabled.
-- Rate limiting: general limiter applied globally.
+- API reference: see `API_REFERENCE.md`
+- Security details (OAuth, JWT, CORS): see `SECURITY_README.md`
+- Rate limiting details: see `RATE_LIMITING.md`
 
-## Authentication
+## Notes
 
-Google OAuth2 for login; a JWT is set as an HTTP-only cookie named `jwt_token`. Protected routes require this cookie. See `SECURITY_README.md` for details.
-
-## Endpoints
-
-### Health
-- GET `/health` → Service status
-
-### Auth (public unless noted)
-- GET `/auth/google/login` → Redirect to Google OAuth
-- GET `/auth/google/callback` → OAuth callback; sets `jwt_token` cookie
-- POST `/auth/logout` → Clears auth cookie
-- GET `/auth/me` (protected) → Current user from JWT
-
-### Users (all protected; base `/api/user`)
-- GET `/api/user` → List users
-- GET `/api/user/:id` → Get user by id
-- PUT `/api/user/:id` → Update user
-- DELETE `/api/user/:id` → Delete user
-
-### Travel Tickets (all protected; base `/api/travel`)
-- POST `/api/travel` → Create ticket
-- GET `/api/travel` → List tickets
-- GET `/api/travel/:id` → Get ticket by id
-- PUT `/api/travel/:id` → Update ticket
-- DELETE `/api/travel/:id` → Delete ticket
-- GET `/api/travel/:id/recommendations` → Recommendations (stricter rate limit)
-- GET `/api/travel/user-responses` → Current user’s responses
-
-## Example Usage
-
-Login flow (browser):
-```bash
-open http://localhost:8080/auth/google/login
-```
-
-Get current user (after login):
-```bash
-curl -i http://localhost:8080/auth/me
-```
-
-Create travel ticket:
-```bash
-curl -i -X POST http://localhost:8080/api/travel \
-  -H 'Content-Type: application/json' \
-  --cookie "jwt_token=YOUR_JWT" \
-  -d '{"title":"Trip to Goa","from":"BLR","to":"GOI"}'
-```
-
-## Rate Limiting
-
-- Global general limiter for all routes.
-- Stricter limiter on `/auth/*`.
-- Stricter limiter for `/api/travel/:id/recommendations`.
-
-See `RATE_LIMITING.md` for configuration.
+- New tickets are created with `status: open`; set to `closed` to stop recommendations.
+- Recommendation results: redact `ticket.id` and `ticket.user_id`; include minimal user `{name, batch}`.
