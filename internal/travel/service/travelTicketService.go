@@ -172,12 +172,24 @@ func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.Recomm
 		if uerr == nil && cu != nil {
 			minUser = models.MinimalUser{Name: cu.Name, Batch: cu.Batch}
 		}
+		public := models.PublicTicket{
+			Source:       c.Source,
+			Destination:  c.Destination,
+			EmptySeats:   c.EmptySeats,
+			DepartureAt:  c.DepartureAt,
+			TimeDiffMins: c.TimeDiffMins,
+			PhoneNumber:  c.PhoneNumber,
+			Status:       c.Status,
+			CreatedAt:    c.CreatedAt,
+			UpdatedAt:    c.UpdatedAt,
+		}
 		scored = append(scored, models.ScoredTicket{
-			Ticket: c,
-			Score:  score,
-			Date:   c.DepartureAt.Format("2006-01-02"),
-			Time:   c.DepartureAt.Format("15:04"),
-			User:   minUser,
+			Ticket:      public,
+			Score:       score,
+			Date:        c.DepartureAt.Format("2006-01-02"),
+			Time:        c.DepartureAt.Format("15:04"),
+			User:        minUser,
+			CandidateID: c.ID,
 		})
 	}
 
@@ -196,7 +208,7 @@ func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.Recomm
 		if len(group) >= 4 {
 			break
 		}
-		c := findCandidateByID(candidates, sct.Ticket.ID)
+		c := findCandidateByID(candidates, sct.CandidateID)
 		if c == nil {
 			continue
 		}
@@ -218,10 +230,10 @@ func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.Recomm
 	// Other alternatives
 	others := make([]models.ScoredTicket, 0)
 	for _, sct := range scored {
-		if containsTicketID(result.BestGroup, sct.Ticket.ID) {
+		if containsTicketID(result.BestGroup, sct.CandidateID) {
 			continue
 		}
-		if result.BestMatch != nil && result.BestMatch.Ticket.ID == sct.Ticket.ID {
+		if result.BestMatch != nil && result.BestMatch.CandidateID == sct.CandidateID {
 			continue
 		}
 		others = append(others, sct)
@@ -292,7 +304,7 @@ func absDuration(d time.Duration) time.Duration {
 
 func containsTicketID(list []models.ScoredTicket, id int64) bool {
 	for _, s := range list {
-		if s.Ticket.ID == id {
+		if s.CandidateID == id {
 			return true
 		}
 	}
