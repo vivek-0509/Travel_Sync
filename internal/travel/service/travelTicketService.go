@@ -166,11 +166,18 @@ func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.Recomm
 		}
 
 		score := s.scoreTicket(*t, c)
+		// fetch minimal user details for candidate
+		cu, uerr := s.UserRepo.GetByID(c.UserID)
+		var minUser models.MinimalUser
+		if uerr == nil && cu != nil {
+			minUser = models.MinimalUser{Name: cu.Name, Batch: cu.Batch}
+		}
 		scored = append(scored, models.ScoredTicket{
 			Ticket: c,
 			Score:  score,
 			Date:   c.DepartureAt.Format("2006-01-02"),
 			Time:   c.DepartureAt.Format("15:04"),
+			User:   minUser,
 		})
 	}
 
