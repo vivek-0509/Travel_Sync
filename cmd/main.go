@@ -30,7 +30,7 @@ func main() {
 		log.Fatalf("Failed to connect to PostgresDB: %v", err)
 	}
 
-	defer database.Disconnect(db) //  ensures DB is closed on exit
+	defer database.Disconnect(db) //  ensures  DB is closed on exit
 
 	userRepo := repository.NewUserRepo(db)
 	userService := userService.NewUserService(userRepo)
