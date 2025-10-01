@@ -12,12 +12,12 @@ var (
 	}
 
 	RailwayStations = map[string]struct{}{
-		"KSR SBC Bengaluru Junction":          {},
-		"SMVT Bengaluru railway station":      {},
-		"Krishnarajapuram Railway Station":    {},
-		"Yesvantpur Junction Railway station": {},
-		"Banglore Cantonment Railway Station": {},
-		"Bengaluru East Railway Station":      {},
+		"KSR SBC Bengaluru Junction Railway Station": {},
+		"SMVT Bengaluru Railway station":             {},
+		"Krishnarajapuram Railway Station":           {},
+		"Yesvantpur Junction Railway station":        {},
+		"Banglore Cantonment Railway Station":        {},
+		"Bengaluru East Railway Station":             {},
 	}
 )
 
