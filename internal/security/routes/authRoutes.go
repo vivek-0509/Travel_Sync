@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"Travel_Sync/internal/middleware"
 	"Travel_Sync/internal/security/config"
 	"Travel_Sync/internal/security/handler"
 	"Travel_Sync/internal/security/service"
@@ -10,6 +11,8 @@ import (
 
 func RegisterAuthRoutes(router *gin.Engine, authHandler *handler.OAuthHandler, jwtService *service.JWTService) {
 	auth := router.Group("/auth")
+	// Apply stricter rate limiting for auth endpoints
+	auth.Use(middleware.AuthRateLimiter())
 	{
 		// Public routes (no authentication required)
 		auth.GET("/google/login", authHandler.GoogleLogin)
