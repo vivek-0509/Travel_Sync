@@ -1,55 +1,31 @@
 package models
 
-var (
-	Hostels = map[string]struct{}{
-		"Uniworld1": {},
-		"Uniworld2": {},
-	}
-
-	AirportTerminals = map[string]struct{}{
-		"Terminal1": {},
-		"Terminal2": {},
-	}
-
-	RailwayStations = map[string]struct{}{
-		"KSR SBC Bengaluru Junction":          {},
-		"SMVT Bengaluru railway station":      {},
-		"Krishnarajapuram Railway Station":    {},
-		"Yesvantpur Junction Railway station": {},
-		"Banglore Cantonment Railway Station": {},
-		"Bengaluru East Railway Station":      {},
-	}
-)
-
-func IsHostel(loc string) bool {
-	_, ok := Hostels[loc]
-	return ok
+type TravelTicketCreateDto struct {
+	Source       string `json:"source" binding:"required"`
+	Destination  string `json:"destination" binding:"required"`
+	DepartureAt  string `json:"departure_at" binding:"required"` // RFC3339 e.g., 2025-10-01T14:30:00Z
+	TimeDiffMins int    `json:"time_diff_mins" binding:"required,min=0,max=720"`
+	EmptySeats   int    `json:"empty_seats" binding:"required,min=1,max=10"`
+	PhoneNumber  string `json:"phone_number" binding:"required"`
 }
 
-func IsAirportTerminal(loc string) bool {
-	_, ok := AirportTerminals[loc]
-	return ok
+type TravelTicketUpdateDto struct {
+	Source       string `json:"source"`
+	Destination  string `json:"destination"`
+	DepartureAt  string `json:"departure_at"` // RFC3339, optional
+	TimeDiffMins int    `json:"time_diff_mins"`
+	EmptySeats   int    `json:"empty_seats"`
+	PhoneNumber  string `json:"phone_number"`
 }
 
-func IsRailwayStation(loc string) bool {
-	_, ok := RailwayStations[loc]
-	return ok
-}
-
-// AreNearbyTerminals returns true when two airport terminals are considered close enough
-// to be interchangeable for matching purposes (e.g. Terminal1 and Terminal2).
-func AreNearbyTerminals(a, b string) bool {
-	if a == b {
-		return true
-	}
-	return IsAirportTerminal(a) && IsAirportTerminal(b)
-}
-
-// AreNearbyHostels returns true when two hostels are considered close enough
-// to be interchangeable (e.g. Uniworld1 and Uniworld2).
-func AreNearbyHostels(a, b string) bool {
-	if a == b {
-		return true
-	}
-	return IsHostel(a) && IsHostel(b)
+type TravelTicketUserResponseDto struct {
+	ID           int64  `json:"id"`
+	StudentName  string `json:"student_name"`
+	StudentBatch string `json:"student_batch"`
+	Source       string `json:"source"`
+	Destination  string `json:"destination"`
+	Date         string `json:"date"` // 2006-01-02
+	Time         string `json:"time"` // 15:04
+	EmptySeats   int    `json:"empty_seats"`
+	PhoneNumber  string `json:"phone_number"`
 }
