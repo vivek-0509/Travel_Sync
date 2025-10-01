@@ -25,7 +25,7 @@ func NewOAuthHandler(customOAuth2Service *service.CustomOAuth2Service) *OAuthHan
 func (h *OAuthHandler) GoogleLogin(c *gin.Context) {
 	state := generateRandomState() // implement secure random
 	// set short-lived cookie with state
-	c.SetCookie("oauth_state", state, 300, "/", "", false, true) // secure=true in prod
+	c.SetCookie("oauth_state", state, 300, "/", "", true, true) // secure=true in prod
 	url := h.CustomOAuth2Service.OAuthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
