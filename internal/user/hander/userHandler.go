@@ -49,6 +49,18 @@ func (u *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
+	// Ownership check: user can update only their own profile
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "unauthorized"})
+		return
+	}
+	currentUserID := toInt64(uid)
+	if currentUserID != id {
+		c.JSON(http.StatusForbidden, gin.H{"success": false, "error": "forbidden"})
+		return
+	}
+
 	var dto models.UserUpdateDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Invalid request body"})
@@ -62,6 +74,16 @@ func (u *UserHandler) UpdateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": user})
+}
+
+func toInt64(v interface{}) int64 {
+	if id, ok := v.(int64); ok {
+		return id
+	}
+	if f, ok := v.(float64); ok {
+		return int64(f)
+	}
+	return 0
 }
 
 func (u *UserHandler) DeleteUser(c *gin.Context) {

@@ -128,8 +128,18 @@ func (h *TravelTicketHandler) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "invalid request body"})
 		return
 	}
-	ticket, err := h.Svc.Update(id, &dto)
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "unauthorized"})
+		return
+	}
+	currentUserID := toInt64(uid)
+	ticket, err := h.Svc.Update(currentUserID, id, &dto)
 	if err != nil {
+		if err.Error() == "forbidden" {
+			c.JSON(http.StatusForbidden, gin.H{"success": false, "error": "forbidden"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
 		return
 	}
@@ -141,7 +151,17 @@ func (h *TravelTicketHandler) Delete(c *gin.Context) {
 	if !ok {
 		return
 	}
-	if err := h.Svc.Delete(id); err != nil {
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "unauthorized"})
+		return
+	}
+	currentUserID := toInt64(uid)
+	if err := h.Svc.Delete(currentUserID, id); err != nil {
+		if err.Error() == "forbidden" {
+			c.JSON(http.StatusForbidden, gin.H{"success": false, "error": "forbidden"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "failed to delete ticket"})
 		return
 	}
@@ -171,4 +191,14 @@ func (h *TravelTicketHandler) GetUserResponses(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": responses})
+}
+
+func toInt64(v interface{}) int64 {
+	if id, ok := v.(int64); ok {
+		return id
+	}
+	if f, ok := v.(float64); ok {
+		return int64(f)
+	}
+	return 0
 }

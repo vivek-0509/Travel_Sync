@@ -52,10 +52,13 @@ func (s *TravelTicketService) GetAll() ([]tentity.TravelTicket, error) {
 	return s.Repo.GetAll()
 }
 
-func (s *TravelTicketService) Update(id int64, dto *models.TravelTicketUpdateDto) (*tentity.TravelTicket, error) {
+func (s *TravelTicketService) Update(currentUserID int64, id int64, dto *models.TravelTicketUpdateDto) (*tentity.TravelTicket, error) {
 	ticket, err := s.Repo.GetByID(id)
 	if err != nil {
 		return nil, err
+	}
+	if ticket.UserID != currentUserID {
+		return nil, errors.New("forbidden")
 	}
 	ticket = mapper.ApplyUpdateDtoToEntity(dto, ticket)
 	updated, err := s.Repo.Update(ticket)
@@ -65,7 +68,14 @@ func (s *TravelTicketService) Update(id int64, dto *models.TravelTicketUpdateDto
 	return updated, nil
 }
 
-func (s *TravelTicketService) Delete(id int64) error {
+func (s *TravelTicketService) Delete(currentUserID int64, id int64) error {
+	ticket, err := s.Repo.GetByID(id)
+	if err != nil {
+		return err
+	}
+	if ticket.UserID != currentUserID {
+		return errors.New("forbidden")
+	}
 	return s.Repo.Delete(id)
 }
 
