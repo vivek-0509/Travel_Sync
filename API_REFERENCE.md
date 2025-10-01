@@ -113,9 +113,6 @@ PUT `/api/user/:id`
 ```json
 { "success": false, "error": "..." }
 ```
-```json
-{ "success": false, "error": "forbidden" } // cannot update other users' profiles
-```
 
 ### Delete User
 DELETE `/api/user/:id`
@@ -238,9 +235,6 @@ PUT `/api/travel/:id`
 ```json
 { "success": false, "error": "..." }
 ```
-```json
-{ "success": false, "error": "forbidden" } // when trying to update others' tickets
-```
 
 ### Delete Ticket
 DELETE `/api/travel/:id`
@@ -252,9 +246,6 @@ DELETE `/api/travel/:id`
 - Errors 500:
 ```json
 { "success": false, "error": "failed to delete ticket" }
-```
-```json
-{ "success": false, "error": "forbidden" } // when trying to delete others' tickets
 ```
 
 ### Get Recommendations (Rate Limited)
