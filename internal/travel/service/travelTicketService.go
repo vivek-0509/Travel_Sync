@@ -170,7 +170,7 @@ func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.Recomm
 		cu, uerr := s.UserRepo.GetByID(c.UserID)
 		var minUser models.MinimalUser
 		if uerr == nil && cu != nil {
-			minUser = models.MinimalUser{Name: cu.Name, Batch: cu.Batch}
+			minUser = models.MinimalUser{Name: cu.Name, Batch: cu.Batch, Email: cu.Email}
 		}
 		public := models.PublicTicket{
 			Source:       c.Source,

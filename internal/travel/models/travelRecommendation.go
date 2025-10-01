@@ -7,6 +7,7 @@ import (
 type MinimalUser struct {
 	Name  string `json:"name"`
 	Batch string `json:"batch"`
+	Email string `json:"email"`
 }
 
 // PublicTicket is a redacted view of TravelTicket for recommendations
