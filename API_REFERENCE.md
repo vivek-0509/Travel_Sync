@@ -1,4 +1,4 @@
-# Travel Sync API Reference
+#  Travel Sync API Reference
 
 Comprehensive documentation for frontend developers. All protected endpoints require the HTTP-only cookie `jwt_token` (set by the auth flow).
 
@@ -64,7 +64,7 @@ GET `/auth/me`
 ---
 
 ## Users (Protected)
-
+  
 Base: `/api/user`
 
 ### Get All Users
