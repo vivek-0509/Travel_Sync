@@ -43,7 +43,7 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 
 	code := c.Query("code")
 
-	jwtToken, err := h.CustomOAuth2Service.GoogleCallback(c.Request.Context(), code)
+    jwtToken, created, err := h.CustomOAuth2Service.GoogleCallback(c.Request.Context(), code)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -59,12 +59,16 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		true,        // httpOnly (cannot be accessed by JS)
 	)
 
-	// redirect to frontend app home (prefer env var)
-	frontendURL := os.Getenv("FRONTEND_URL")
-	if frontendURL == "" {
-		frontendURL = "http://localhost:3000" // dev fallback
-	}
-	c.Redirect(http.StatusTemporaryRedirect, frontendURL+"/auth/success")
+    // redirect to frontend app success page (prefer env var)
+    frontendURL := os.Getenv("FRONTEND_URL")
+    if frontendURL == "" {
+        frontendURL = "http://localhost:3000" // dev fallback
+    }
+    redirectURL := frontendURL + "/auth/success"
+    if created {
+        redirectURL += "?new=1"
+    }
+    c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 
 }
 

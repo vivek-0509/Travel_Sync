@@ -6,6 +6,6 @@ type UserCreateDto struct {
 }
 
 type UserUpdateDto struct {
-	Name        string `validate:"max=255"`
-	PhoneNumber string `validate:"phone"`
+    Name        string `json:"name" validate:"max=255"`
+    PhoneNumber string `json:"phone_number" validate:"phone"`
 }

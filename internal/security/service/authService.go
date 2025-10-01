@@ -17,18 +17,19 @@ func NewAuthService(userService *service.UserService) *AuthService {
 }
 
 // Get user by email or create a new user if not exists
-func (authService *AuthService) GetOrCreateUser(email string) (*entity.User, error) {
-	user, err := authService.UserService.GetUserByEmail(email)
+// Returns: user, created(bool), error
+func (authService *AuthService) GetOrCreateUser(email string) (*entity.User, bool, error) {
+    user, err := authService.UserService.GetUserByEmail(email)
 
-	if err != nil || user == nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			user, err = authService.UserService.CreateUser(email)
-			if err != nil {
-				return nil, err
-			}
-			return user, nil
-		}
-		return nil, err
-	}
-	return user, nil
+    if err != nil || user == nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            user, err = authService.UserService.CreateUser(email)
+            if err != nil {
+                return nil, false, err
+            }
+            return user, true, nil
+        }
+        return nil, false, err
+    }
+    return user, false, nil
 }
