@@ -93,6 +93,18 @@ func (u *UserHandler) DeleteUser(c *gin.Context) {
 		return
 	}
 
+    // Ownership check: user can delete only their own profile
+    uid, exists := c.Get("user_id")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "unauthorized"})
+        return
+    }
+    currentUserID := toInt64(uid)
+    if currentUserID != id {
+        c.JSON(http.StatusForbidden, gin.H{"success": false, "error": "forbidden"})
+        return
+    }
+
 	if err := u.svc.DeleteByID(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": "Failed to delete user"})
 		return
