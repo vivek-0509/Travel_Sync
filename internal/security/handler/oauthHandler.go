@@ -21,19 +21,17 @@ func NewOAuthHandler(customOAuth2Service *service.CustomOAuth2Service) *OAuthHan
 	return &OAuthHandler{CustomOAuth2Service: customOAuth2Service}
 }
 
-// Redirect to google
+// Redirect to Google login
 func (h *OAuthHandler) GoogleLogin(c *gin.Context) {
-	state := generateRandomState() // implement secure random
-	// set short-lived cookie with state
-	c.SetCookie("oauth_state", state, 300, "/", "", true, true) // secure=true in prod
+	state := generateRandomState()
+	// Short-lived state cookie for OAuth verification
+	c.SetCookie("oauth_state", state, 300, "/", "", true, true) // Secure=true for production
 	url := h.CustomOAuth2Service.OAuthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
-// Callback
+// Callback after Google login
 func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
-
-	// Verify state
 	state := c.Query("state")
 	cookieState, _ := c.Cookie("oauth_state")
 	if state == "" || cookieState == "" || state != cookieState {
@@ -42,51 +40,54 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	}
 
 	code := c.Query("code")
-
 	jwtToken, created, err := h.CustomOAuth2Service.GoogleCallback(c.Request.Context(), code)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	//Set Jwt as HTTP-only cookie
-	// Configure cookie for production readiness
-	secure := os.Getenv("COOKIE_SECURE") == "true"
-	//domain := os.Getenv("COOKIE_DOMAIN")
-	
-	// Set cookie with explicit SameSite=None for cross-domain requests
-	c.Header("Set-Cookie", fmt.Sprintf(
-		"jwt_token=%s; Path=/; Max-Age=%d; HttpOnly; Secure=%t; SameSite=None",
-		jwtToken,
-		3600*24*8,
-		secure,
-	))
 
-	// redirect to frontend app success page (prefer env var)
+	// Set JWT cookie for cross-origin requests
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {
-		frontendURL = "http://localhost:3000" // dev fallback
+		frontendURL = "https://d3l0cmmj1er9dy.cloudfront.net" // fallback
 	}
+
+	c.SetCookie(
+		"jwt_token",                      // cookie name
+		jwtToken,                         // value
+		3600*24*8,                        // max age: 8 days
+		"/",                              // path
+		".d3l0cmmj1er9dy.cloudfront.net", // domain: allow subdomains
+		true,                             // secure (HTTPS only)
+		true,                             // httpOnly
+	)
+	// Note: SameSite=None is automatically set by Gin for cross-origin if Secure=true
+
+	// Redirect to frontend success page
 	redirectURL := frontendURL + "/auth/success"
 	if created {
 		redirectURL += "?new=1"
 	}
 	c.Redirect(http.StatusTemporaryRedirect, redirectURL)
-
 }
 
 // Logout handler
 func (h *OAuthHandler) Logout(c *gin.Context) {
-	// Clear the JWT cookie
-	c.SetCookie(
-		"jwt_token", // cookie name
-		"",          // empty value
-		-1,          // max-age (negative means delete immediately)
-		"/",         // path
-		"",          // domain
-		false,       // secure
-		true,        // httpOnly
-	)
+	// Clear JWT cookie
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "https://d3l0cmmj1er9dy.cloudfront.net"
+	}
 
+	c.SetCookie(
+		"jwt_token",
+		"",
+		-1, // delete immediately
+		"/",
+		".d3l0cmmj1er9dy.cloudfront.net",
+		true,
+		true,
+	)
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
 
@@ -99,13 +100,13 @@ func (h *OAuthHandler) GetCurrentUser(c *gin.Context) {
 	}
 
 	userEmail, _ := c.Get("user_email")
-
 	c.JSON(http.StatusOK, gin.H{
 		"user_id": userID,
 		"email":   userEmail,
 	})
 }
 
+// generateRandomState generates a random string for OAuth state
 func generateRandomState() string {
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
