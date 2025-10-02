@@ -17,10 +17,20 @@ func SetupCORS(appCfg *config.AppConfig) gin.HandlerFunc {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}
+
+	// ✅ Use config origins if provided
 	if len(appCfg.AllowedOrigins) > 0 {
 		corsCfg.AllowOrigins = appCfg.AllowedOrigins
 	} else {
-		corsCfg.AllowOrigins = []string{"http://localhost:3000", "http://localhost:8080", "http://127.0.0.1:3000", "http://127.0.0.1:8080"}
+		// ✅ Default origins for local + prod
+		corsCfg.AllowOrigins = []string{
+			"http://localhost:3000",
+			"http://localhost:8080",
+			"http://127.0.0.1:3000",
+			"http://127.0.0.1:8080",
+			"https://d3l0cmmj1er9dy.cloudfront.net", // 👈 your frontend (prod)
+		}
 	}
+
 	return cors.New(corsCfg)
 }
