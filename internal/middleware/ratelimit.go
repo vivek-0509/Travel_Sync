@@ -51,14 +51,28 @@ func RateLimiter(config RateLimitConfig) gin.HandlerFunc {
 	instance := limiter.New(store, rate)
 
 	return func(c *gin.Context) {
-		// Get client identifier (IP address)
+		// Get client identifier
 		clientIP := c.ClientIP()
 
 		// Create context
 		ctx := context.Background()
 
-		// Create key with prefix
-		key := config.Prefix + ":" + clientIP
+		// Create key with prefix: prefer per-user when authenticated, else fall back to IP
+		key := ""
+		if userIDVal, exists := c.Get("user_id"); exists {
+			switch id := userIDVal.(type) {
+			case int64:
+				key = config.Prefix + ":uid:" + strconv.FormatInt(id, 10)
+			case int:
+				key = config.Prefix + ":uid:" + strconv.FormatInt(int64(id), 10)
+			case string:
+				key = config.Prefix + ":uid:" + id
+			default:
+				key = config.Prefix + ":" + clientIP
+			}
+		} else {
+			key = config.Prefix + ":" + clientIP
+		}
 
 		// Check rate limit
 		context, err := instance.Get(ctx, key)

@@ -1,6 +1,6 @@
 # Rate Limiting Guide
 
-This service enforces IP-based rate limits using `ulule/limiter` with an in-memory store.
+This service enforces rate limits using `ulule/limiter` with an in-memory store. Keys are per-user for authenticated requests and per-IP for unauthenticated requests.
 
 ## Where It's Applied
 
@@ -27,7 +27,8 @@ var (
 ```
 
 `RateLimiter(config)` creates a Gin middleware that:
-- Keys by `prefix:clientIP`
+- Keys by `prefix:uid:<user_id>` when `user_id` is present in the Gin context (set by the JWT middleware)
+- Falls back to `prefix:<clientIP>` when the request is unauthenticated
 - Adds headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
 - Returns `429` with `retry_after` when exceeded
 
@@ -62,7 +63,7 @@ rec.Use(middleware.RecommendationRateLimiter())
 ## Notes & Caveats
 
 - The current store is in-memory and per-instance. In multi-instance deployments, switch to a shared store (e.g., Redis) to enforce limits across replicas.
-- IP-based keys can be inaccurate behind proxies; ensure `X-Forwarded-For` is correctly handled by Gin or place rate limiting at the edge (e.g., API gateway, CDN).
+- IP-based fallback can be inaccurate behind proxies; ensure `X-Forwarded-For` is correctly handled by Gin via `TrustedProxies` or place rate limiting at the edge (e.g., API gateway, CDN).
 - Tune limits based on real traffic patterns and security posture.
 
 
