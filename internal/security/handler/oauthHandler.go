@@ -49,7 +49,7 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	// Set JWT cookie for cross-origin requests
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {
-		frontendURL = "https://travel-sync-frontend.onrender.com" // updated fallback
+		frontendURL = "https://www.travelsync.space" // updated fallback
 	}
 
 	// For cross-origin cookies, don't set domain - let browser handle it
