@@ -51,13 +51,13 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	//Set Jwt as HTTP-only cookie
 	// Configure cookie for production readiness
 	secure := os.Getenv("COOKIE_SECURE") == "true"
-	domain := os.Getenv("COOKIE_DOMAIN")
+	//domain := os.Getenv("COOKIE_DOMAIN")
 	c.SetCookie(
 		"jwt_token",
 		jwtToken,
 		3600*24*8,
 		"/",
-		domain,
+		"",
 		secure,
 		true,
 	)

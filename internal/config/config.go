@@ -11,7 +11,7 @@ type AppConfig struct {
 	FrontendURL    string
 	AllowedOrigins []string
 	CookieSecure   bool
-	CookieDomain   string
+	//CookieDomain   string
 	GinMode        string
 	TrustedProxies []string
 }
@@ -32,7 +32,7 @@ func LoadConfig() *AppConfig {
 		FrontendURL:    os.Getenv("FRONTEND_URL"),
 		AllowedOrigins: origins,
 		CookieSecure:   strings.ToLower(os.Getenv("COOKIE_SECURE")) == "true",
-		CookieDomain:   os.Getenv("COOKIE_DOMAIN"),
+		//CookieDomain:   os.Getenv("COOKIE_DOMAIN"),
 		GinMode:        os.Getenv("GIN_MODE"),
 		TrustedProxies: splitAndTrim(os.Getenv("TRUSTED_PROXIES")),
 	}
