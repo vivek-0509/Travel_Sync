@@ -52,14 +52,16 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		frontendURL = "https://d3l0cmmj1er9dy.cloudfront.net" // fallback
 	}
 
+	domain := os.Getenv("DOMAIN")
+
 	c.SetCookie(
-		"jwt_token",                      // cookie name
-		jwtToken,                         // value
-		3600*24*8,                        // max age: 8 days
-		"/",                              // path
-		".d3l0cmmj1er9dy.cloudfront.net", // domain: allow subdomains
-		true,                             // secure (HTTPS only)
-		true,                             // httpOnly
+		"jwt_token", // cookie name
+		jwtToken,    // value
+		3600*24*8,   // max age: 8 days
+		"/",         // path
+		domain,      // domain: allow subdomains
+		true,        // secure (HTTPS only)
+		true,        // httpOnly
 	)
 	// Note: SameSite=None is automatically set by Gin for cross-origin if Secure=true
 
@@ -76,15 +78,16 @@ func (h *OAuthHandler) Logout(c *gin.Context) {
 	// Clear JWT cookie
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {
-		frontendURL = "https://d3l0cmmj1er9dy.cloudfront.net"
+		frontendURL = "https://travel-sync-frontend.onrender.com"
 	}
+	domain := os.Getenv("DOMAIN")
 
 	c.SetCookie(
 		"jwt_token",
 		"",
 		-1, // delete immediately
 		"/",
-		".d3l0cmmj1er9dy.cloudfront.net",
+		domain,
 		true,
 		true,
 	)
