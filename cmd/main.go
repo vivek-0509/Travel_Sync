@@ -3,7 +3,6 @@ package main
 import (
 	"Travel_Sync/internal/config"
 	"Travel_Sync/internal/database"
-	"Travel_Sync/internal/middleware" // <- import your CORS middleware
 	"Travel_Sync/internal/security/authConfig"
 	handler2 "Travel_Sync/internal/security/handler"
 	routes2 "Travel_Sync/internal/security/routes"
