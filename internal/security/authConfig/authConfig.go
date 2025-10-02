@@ -11,7 +11,7 @@ func GetGoogleOAuthConfig() *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-		RedirectURL:  "https://travel-sync-0ank.onrender.com/auth/google/callback",
+		RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
 		Scopes:       []string{"email", "profile"},
 		Endpoint:     google.Endpoint,
 	}
