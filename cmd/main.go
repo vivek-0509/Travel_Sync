@@ -60,7 +60,7 @@ func main() {
 
 	// ✅ Optional: Handle preflight requests
 	ginEngine.OPTIONS("/*path", func(c *gin.Context) {
-		c.Status(200)
+		c.Status(http.StatusOK)
 	})
 
 	// --- Register routes ---

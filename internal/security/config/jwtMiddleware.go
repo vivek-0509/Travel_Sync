@@ -10,6 +10,12 @@ import (
 // JWTMiddleware creates a middleware for JWT authentication
 func JWTMiddleware(jwtService *service.JWTService) gin.HandlerFunc {
 	return func(c *gin.Context) {
+
+		if c.Request.Method == http.MethodOptions {
+			c.Next()
+			return
+		}
+
 		// Get JWT token from cookie
 		tokenString, err := c.Cookie("jwt_token")
 		if err != nil {
