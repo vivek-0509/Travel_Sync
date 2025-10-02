@@ -39,11 +39,15 @@ func SetupCORS(appCfg *config.AppConfig) gin.HandlerFunc {
 	//return cors.New(corsCfg)
 
 	return cors.New(cors.Config{
-		AllowAllOrigins:  true, // ✅ allow all origins
+		AllowOriginFunc: func(origin string) bool {
+			// ✅ allow any origin dynamically
+			// or only allow certain whitelisted origins
+			return true
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: false, // ❌ must be false if AllowAllOrigins=true
+		AllowCredentials: true, // ✅ allow cookies
 		MaxAge:           12 * time.Hour,
 	})
 }
