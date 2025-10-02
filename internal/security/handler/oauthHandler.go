@@ -52,15 +52,14 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	// Configure cookie for production readiness
 	secure := os.Getenv("COOKIE_SECURE") == "true"
 	//domain := os.Getenv("COOKIE_DOMAIN")
-	c.SetCookie(
-		"jwt_token",
+	
+	// Set cookie with explicit SameSite=None for cross-domain requests
+	c.Header("Set-Cookie", fmt.Sprintf(
+		"jwt_token=%s; Path=/; Max-Age=%d; HttpOnly; Secure=%t; SameSite=None",
 		jwtToken,
 		3600*24*8,
-		"/",
-		"",
 		secure,
-		true,
-	)
+	))
 
 	// redirect to frontend app success page (prefer env var)
 	frontendURL := os.Getenv("FRONTEND_URL")

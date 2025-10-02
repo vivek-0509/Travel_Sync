@@ -59,9 +59,6 @@ func main() {
 	// --- Gin Router ---
 	ginEngine := server.NewGinRouter()
 
-	// ✅ Apply CORS globally BEFORE registering routes
-	ginEngine.Use(middleware.SetupCORS(cfg))
-
 	// ✅ Optional: Handle preflight requests
 	ginEngine.OPTIONS("/*path", func(c *gin.Context) {
 		c.Status(200)

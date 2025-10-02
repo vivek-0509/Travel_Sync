@@ -39,6 +39,15 @@ func NewGinRouter() *gin.Engine {
 		})
 	})
 
+	// Add CORS test endpoint
+	r.GET("/cors-test", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"cors_enabled": true,
+			"origin":       c.GetHeader("Origin"),
+			"message":      "CORS is working correctly",
+		})
+	})
+
 	return r
 }
 
