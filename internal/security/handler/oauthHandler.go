@@ -49,21 +49,16 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	// Set JWT cookie for cross-origin requests
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {
-		frontendURL = "https://d3l0cmmj1er9dy.cloudfront.net" // fallback
+		frontendURL = "https://travel-sync-frontend.onrender.com" // updated fallback
 	}
 
-	domain := os.Getenv("DOMAIN")
-
-	c.SetCookie(
-		"jwt_token", // cookie name
-		jwtToken,    // value
-		3600*24*8,   // max age: 8 days
-		"/",         // path
-		domain,      // domain: allow subdomains
-		true,        // secure (HTTPS only)
-		true,        // httpOnly
-	)
-	// Note: SameSite=None is automatically set by Gin for cross-origin if Secure=true
+	// For cross-origin cookies, don't set domain - let browser handle it
+	// Setting domain can cause issues with cross-origin requests
+	c.Header("Set-Cookie", fmt.Sprintf(
+		"jwt_token=%s; Path=/; Max-Age=%d; HttpOnly; Secure; SameSite=None",
+		jwtToken,
+		3600*24*8,
+	))
 
 	// Redirect to frontend success page
 	redirectURL := frontendURL + "/auth/success"
@@ -75,22 +70,8 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 
 // Logout handler
 func (h *OAuthHandler) Logout(c *gin.Context) {
-	// Clear JWT cookie
-	frontendURL := os.Getenv("FRONTEND_URL")
-	if frontendURL == "" {
-		frontendURL = "https://travel-sync-frontend.onrender.com"
-	}
-	domain := os.Getenv("DOMAIN")
-
-	c.SetCookie(
-		"jwt_token",
-		"",
-		-1, // delete immediately
-		"/",
-		domain,
-		true,
-		true,
-	)
+	// Clear JWT cookie with same settings as when it was set
+	c.Header("Set-Cookie", "jwt_token=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=None")
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
 
