@@ -22,6 +22,16 @@ func NewTravelTicketService(repo *repository.TravelTicketRepo, userRepo *urepo.U
 }
 
 func (s *TravelTicketService) Create(userID int64, dto *models.TravelTicketCreateDto) (*tentity.TravelTicket, error) {
+    // Enforce per-user ticket cap
+    const maxTicketsPerUser = 20
+    if count, err := s.Repo.CountByUserID(userID); err == nil {
+        if count >= maxTicketsPerUser {
+            return nil, errors.New("Please delete your non-relevant/closed tickets to make new ones")
+        }
+    } else {
+        return nil, err
+    }
+
 	user, err := s.UserRepo.GetByID(userID)
 	if err != nil {
 		return nil, err

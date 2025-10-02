@@ -58,6 +58,15 @@ func (r *TravelTicketRepo) GetByUserID(userID int64) ([]entity.TravelTicket, err
 	return tickets, nil
 }
 
+// CountByUserID returns total number of tickets created by the user
+func (r *TravelTicketRepo) CountByUserID(userID int64) (int64, error) {
+    var count int64
+    if err := r.DB.Model(&entity.TravelTicket{}).Where("user_id = ?", userID).Count(&count).Error; err != nil {
+        return 0, err
+    }
+    return count, nil
+}
+
 // ExistsForUserOnDate checks whether a ticket exists for the given user on the same calendar date
 // defined by dayStart (00:00 at the desired location). Optionally excludes a ticket ID.
 func (r *TravelTicketRepo) ExistsForUserOnDate(userID int64, dayStart time.Time, excludeID *int64) (bool, error) {
