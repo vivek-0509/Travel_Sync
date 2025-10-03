@@ -1,101 +1,95 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
-	"strconv"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ulule/limiter/v3"
-	"github.com/ulule/limiter/v3/drivers/store/memory"
+	"github.com/google/uuid"
+	"golang.org/x/time/rate"
 )
 
+// RateLimitConfig defines configuration for each limiter
 type RateLimitConfig struct {
-	Rate   string // e.g., "10-M" for 10 requests per minute
-	Burst  int    // burst limit
-	Prefix string // key prefix
+	Rate   rate.Limit // requests per second
+	Burst  int        // burst capacity
+	Prefix string     // key prefix
 }
 
+// Global limiter map
 var (
-	// Default rate limiters
+	limiters = make(map[string]*rate.Limiter)
+	mu       sync.Mutex
+)
+
+// Rate limiters for specific endpoints
+var (
 	AuthRateLimit = RateLimitConfig{
-		Rate:   "30-M", // 5 requests per minute for auth endpoints
+		Rate:   rate.Every(time.Minute / 30), // 30 requests per minute
 		Burst:  60,
 		Prefix: "auth",
 	}
 
 	GeneralRateLimit = RateLimitConfig{
-		Rate:   "1200-H", // 100 requests per hour for general endpoints
+		Rate:   rate.Every(time.Hour / 1200), // 1200 requests per hour
 		Burst:  1800,
 		Prefix: "general",
 	}
 
 	RecommendationRateLimit = RateLimitConfig{
-		Rate:   "60-M", // 20 requests per minute for recommendations
+		Rate:   rate.Every(time.Minute / 60), // 60 requests per minute
 		Burst:  120,
 		Prefix: "recommend",
 	}
 )
 
-func RateLimiter(config RateLimitConfig) gin.HandlerFunc {
-	// Create rate limiter
-	rate, err := limiter.NewRateFromFormatted(config.Rate)
-	if err != nil {
-		panic(err)
+// getLimiter returns (or creates) a limiter for the given key
+func getLimiter(key string, config RateLimitConfig) *rate.Limiter {
+	mu.Lock()
+	defer mu.Unlock()
+
+	limiter, exists := limiters[key]
+	if !exists {
+		limiter = rate.NewLimiter(config.Rate, config.Burst)
+		limiters[key] = limiter
 	}
+	return limiter
+}
 
-	// Create memory store
-	store := memory.NewStore()
-
-	// Create limiter instance
-	instance := limiter.New(store, rate)
-
+// RateLimitMiddleware creates a Gin middleware for a given config
+func RateLimitMiddleware(config RateLimitConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get client identifier
-		clientIP := c.ClientIP()
+		var key string
 
-		// Create context
-		ctx := context.Background()
-
-		// Create key with prefix: prefer per-user when authenticated, else fall back to IP
-		key := ""
-		if userIDVal, exists := c.Get("user_id"); exists {
-			switch id := userIDVal.(type) {
-			case int64:
-				key = config.Prefix + ":uid:" + strconv.FormatInt(id, 10)
-			case int:
-				key = config.Prefix + ":uid:" + strconv.FormatInt(int64(id), 10)
-			case string:
-				key = config.Prefix + ":uid:" + id
-			default:
-				key = config.Prefix + ":" + clientIP
-			}
+		// 1. If logged in → use user_id
+		if uid, exists := c.Get("user_id"); exists {
+			key = config.Prefix + ":user:" + uid.(string)
 		} else {
-			key = config.Prefix + ":" + clientIP
+			// 2. Guests → assign unique guest_id cookie
+			guestID, err := c.Cookie("guest_id")
+			if err != nil || guestID == "" {
+				guestID = uuid.New().String()
+				// Set cookie for 1h
+				c.SetCookie("guest_id", guestID, 3600, "/", "", false, true)
+			}
+			key = config.Prefix + ":guest:" + guestID
+
+			// 3. Fallback → IP + UA
+			if guestID == "" {
+				ua := c.Request.UserAgent()
+				key = config.Prefix + ":ipua:" + c.ClientIP() + ":" + ua
+			}
 		}
 
-		// Check rate limit
-		context, err := instance.Get(ctx, key)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"success": false,
-				"error":   "Rate limit check failed",
-			})
-			c.Abort()
-			return
-		}
+		limiter := getLimiter(key, config)
 
-		// Set rate limit headers
-		c.Header("X-RateLimit-Limit", strconv.FormatInt(context.Limit, 10))
-		c.Header("X-RateLimit-Remaining", strconv.FormatInt(context.Remaining, 10))
-		c.Header("X-RateLimit-Reset", strconv.FormatInt(context.Reset, 10))
-
-		// Check if limit exceeded
-		if context.Reached {
+		// Deny if not allowed
+		if !limiter.Allow() {
 			c.JSON(http.StatusTooManyRequests, gin.H{
 				"success":     false,
 				"error":       "Rate limit exceeded. Please try again later.",
-				"retry_after": context.Reset,
+				"retry_after": limiter.Reserve().Delay().Seconds(),
 			})
 			c.Abort()
 			return
@@ -105,15 +99,15 @@ func RateLimiter(config RateLimitConfig) gin.HandlerFunc {
 	}
 }
 
-// Specific rate limiters for different endpoints
+// Specific middlewares
 func AuthRateLimiter() gin.HandlerFunc {
-	return RateLimiter(AuthRateLimit)
+	return RateLimitMiddleware(AuthRateLimit)
 }
 
 func GeneralRateLimiter() gin.HandlerFunc {
-	return RateLimiter(GeneralRateLimit)
+	return RateLimitMiddleware(GeneralRateLimit)
 }
 
 func RecommendationRateLimiter() gin.HandlerFunc {
-	return RateLimiter(RecommendationRateLimit)
+	return RateLimitMiddleware(RecommendationRateLimit)
 }
