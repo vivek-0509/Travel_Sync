@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -26,7 +27,7 @@ var (
 // Rate limiters for specific endpoints
 var (
 	AuthRateLimit = RateLimitConfig{
-		Rate:   rate.Every(time.Minute / 20), // 30 requests per minute
+		Rate:   rate.Every(time.Minute / 30), // ~30 requests per minute
 		Burst:  40,
 		Prefix: "auth",
 	}
@@ -62,43 +63,59 @@ func RateLimitMiddleware(config RateLimitConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var key string
 
-		// 1. If logged in → use user_id
+		// 1. Logged-in user → use user_id
 		if uid, exists := c.Get("user_id"); exists {
-			key = config.Prefix + ":user:" + uid.(string)
+			switch v := uid.(type) {
+			case string:
+				key = config.Prefix + ":user:" + v
+			case int:
+				key = config.Prefix + ":user:" + fmt.Sprintf("%d", v)
+			case int64:
+				key = config.Prefix + ":user:" + fmt.Sprintf("%d", v)
+			default:
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"success": false,
+					"error":   "invalid user id type",
+				})
+				c.Abort()
+				return
+			}
 		} else {
 			// 2. Guests → assign unique guest_id cookie
 			guestID, err := c.Cookie("guest_id")
 			if err != nil || guestID == "" {
 				guestID = uuid.New().String()
 				// Set cookie for 1h
-				c.SetSameSite(http.SameSiteNoneMode) // required for cross-site cookies
+				c.SetSameSite(http.SameSiteNoneMode)
 				c.SetCookie(
 					"guest_id",
 					guestID,
 					3600, // 1 hour
 					"/",  // path
 					"",   // domain valid for both travelsync.space & app.travelsync.space
-					true, // Secure: only sent over HTTPS
-					true, // HttpOnly: JS can’t read it
+					true, // Secure
+					true, // HttpOnly
 				)
 			}
 			key = config.Prefix + ":guest:" + guestID
 
-			// 3. Fallback → IP + UA
+			// 3. Fallback → IP + User-Agent
 			if guestID == "" {
 				ua := c.Request.UserAgent()
 				key = config.Prefix + ":ipua:" + c.ClientIP() + ":" + ua
 			}
 		}
 
+		// Get limiter for key
 		limiter := getLimiter(key, config)
 
 		// Deny if not allowed
 		if !limiter.Allow() {
+			retryAfter := limiter.Reserve().Delay().Seconds()
 			c.JSON(http.StatusTooManyRequests, gin.H{
 				"success":     false,
 				"error":       "Rate limit exceeded. Please try again later.",
-				"retry_after": limiter.Reserve().Delay().Seconds(),
+				"retry_after": retryAfter,
 			})
 			c.Abort()
 			return
