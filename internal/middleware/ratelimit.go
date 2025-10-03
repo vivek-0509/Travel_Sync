@@ -26,8 +26,8 @@ var (
 // Rate limiters for specific endpoints
 var (
 	AuthRateLimit = RateLimitConfig{
-		Rate:   rate.Every(time.Minute / 30), // 30 requests per minute
-		Burst:  60,
+		Rate:   rate.Every(time.Minute / 20), // 30 requests per minute
+		Burst:  40,
 		Prefix: "auth",
 	}
 
