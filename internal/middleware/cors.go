@@ -45,7 +45,8 @@ func SetupCORS(appCfg *config.AppConfig) gin.HandlerFunc {
 			allowedOrigins := []string{
 				"http://localhost:3000",
 				"http://127.0.0.1:3000",
-				"https://www.travelsync.space", // legacy fallback
+				"https://www.travelsync.space",
+				"https://travel-sync-frontend.onrender.com", // legacy fallback
 			}
 
 			// Check if origin is in allowed list
