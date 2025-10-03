@@ -71,7 +71,16 @@ func RateLimitMiddleware(config RateLimitConfig) gin.HandlerFunc {
 			if err != nil || guestID == "" {
 				guestID = uuid.New().String()
 				// Set cookie for 1h
-				c.SetCookie("guest_id", guestID, 3600, "/", "", false, true)
+				c.SetSameSite(http.SameSiteNoneMode) // required for cross-site cookies
+				c.SetCookie(
+					"guest_id",
+					guestID,
+					3600, // 1 hour
+					"/",  // path
+					"",   // domain valid for both travelsync.space & app.travelsync.space
+					true, // Secure: only sent over HTTPS
+					true, // HttpOnly: JS can’t read it
+				)
 			}
 			key = config.Prefix + ":guest:" + guestID
 
