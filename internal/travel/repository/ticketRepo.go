@@ -68,7 +68,8 @@ func (r *TravelTicketRepo) CountByUserID(userID int64) (int64, error) {
 }
 
 // ExistsForUserOnDate checks whether a ticket exists for the given user on the same calendar date
-// defined by dayStart (00:00 at the desired location). Optionally excludes a ticket ID.
+// defined by dayStart (00:00 UTC). Optionally excludes a ticket ID.
+// Note: dayStart should be in UTC timezone for consistent date comparisons.
 func (r *TravelTicketRepo) ExistsForUserOnDate(userID int64, dayStart time.Time, excludeID *int64) (bool, error) {
 	dayEnd := dayStart.Add(24 * time.Hour)
 	q := r.DB.Model(&entity.TravelTicket{}).Where(
@@ -85,6 +86,8 @@ func (r *TravelTicketRepo) ExistsForUserOnDate(userID int64, dayStart time.Time,
 	return count > 0, nil
 }
 
+// GetCandidatesSameDateOutbound finds tickets for outbound trips (hostel to home) on the same UTC date
+// dayStart should be in UTC timezone for consistent date comparisons.
 func (r *TravelTicketRepo) GetCandidatesSameDateOutbound(destination string, dayStart time.Time, excludeID int64) ([]entity.TravelTicket, error) {
 	var tickets []entity.TravelTicket
 	dayEnd := dayStart.Add(24 * time.Hour)
@@ -103,6 +106,8 @@ func (r *TravelTicketRepo) GetCandidatesSameDateOutbound(destination string, day
 	return tickets, err
 }
 
+// GetCandidatesSameDateReturn finds tickets for return trips (home to hostel) on the same UTC date
+// dayStart should be in UTC timezone for consistent date comparisons.
 func (r *TravelTicketRepo) GetCandidatesSameDateReturn(source string, dayStart time.Time, excludeID int64) ([]entity.TravelTicket, error) {
 	var tickets []entity.TravelTicket
 	dayEnd := dayStart.Add(24 * time.Hour)

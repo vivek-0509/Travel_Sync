@@ -3,7 +3,7 @@ package models
 type TravelTicketCreateDto struct {
 	Source       string `json:"source" binding:"required"`
 	Destination  string `json:"destination" binding:"required"`
-	DepartureAt  string `json:"departure_at" binding:"required"` // RFC3339 e.g., 2025-10-01T14:30:00Z
+	DepartureAt  string `json:"departure_at" binding:"required"` // RFC3339 UTC format e.g., 2025-10-01T14:30:00Z (must end with Z)
 	TimeDiffMins int    `json:"time_diff_mins" binding:"required,min=0,max=720"`
 	EmptySeats   int    `json:"empty_seats" binding:"required,min=1,max=10"`
 	PhoneNumber  string `json:"phone_number" binding:"required"`
@@ -12,7 +12,7 @@ type TravelTicketCreateDto struct {
 type TravelTicketUpdateDto struct {
 	Source       string `json:"source"`
 	Destination  string `json:"destination"`
-	DepartureAt  string `json:"departure_at"` // RFC3339, optional
+	DepartureAt  string `json:"departure_at"` // RFC3339 UTC format e.g., 2025-10-01T14:30:00Z (must end with Z), optional
 	TimeDiffMins int    `json:"time_diff_mins"`
 	EmptySeats   int    `json:"empty_seats"`
 	PhoneNumber  string `json:"phone_number"`

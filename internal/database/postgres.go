@@ -21,6 +21,11 @@ func Connect(cfg *config.AppConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
+	// Set timezone to UTC for all database operations
+	if _, err := sqlDB.Exec("SET timezone = 'UTC'"); err != nil {
+		log.Printf("Warning: Failed to set timezone to UTC: %v", err)
+	}
+
 	// Test connection
 	if err := sqlDB.Ping(); err != nil {
 		return nil, err

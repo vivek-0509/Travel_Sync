@@ -12,6 +12,8 @@ func FromCreateDtoToEntity(dto *models.TravelTicketCreateDto, user *uentity.User
 	if err != nil {
 		return nil, err
 	}
+	// Ensure the time is in UTC
+	departureAt = departureAt.UTC()
 	return &tentity.TravelTicket{
 		Source:       dto.Source,
 		Destination:  dto.Destination,
@@ -33,7 +35,7 @@ func ApplyUpdateDtoToEntity(dto *models.TravelTicketUpdateDto, ticket *tentity.T
 	}
 	if dto.DepartureAt != "" {
 		if t, err := time.Parse(time.RFC3339, dto.DepartureAt); err == nil {
-			ticket.DepartureAt = t
+			ticket.DepartureAt = t.UTC() // Ensure UTC
 		}
 	}
 	if dto.TimeDiffMins != 0 {

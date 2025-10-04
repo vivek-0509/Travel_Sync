@@ -47,8 +47,8 @@ func (s *TravelTicketService) Create(userID int64, dto *models.TravelTicketCreat
 	if ticket.PhoneNumber == "" {
 		ticket.PhoneNumber = user.PhoneNumber
 	}
-	// Ensure user has no other ticket on the same date
-	day := time.Date(ticket.DepartureAt.Year(), ticket.DepartureAt.Month(), ticket.DepartureAt.Day(), 0, 0, 0, 0, ticket.DepartureAt.Location())
+	// Ensure user has no other ticket on the same date (using UTC)
+	day := time.Date(ticket.DepartureAt.Year(), ticket.DepartureAt.Month(), ticket.DepartureAt.Day(), 0, 0, 0, 0, time.UTC)
 	exists, err := s.Repo.ExistsForUserOnDate(userID, day, nil)
 	if err != nil {
 		return nil, err
@@ -80,8 +80,8 @@ func (s *TravelTicketService) Update(currentUserID int64, id int64, dto *models.
 		return nil, errors.New("forbidden")
 	}
 	ticket = mapper.ApplyUpdateDtoToEntity(dto, ticket)
-	// If departure time changed (or even if not), enforce single ticket per date
-	day := time.Date(ticket.DepartureAt.Year(), ticket.DepartureAt.Month(), ticket.DepartureAt.Day(), 0, 0, 0, 0, ticket.DepartureAt.Location())
+	// If departure time changed (or even if not), enforce single ticket per date (using UTC)
+	day := time.Date(ticket.DepartureAt.Year(), ticket.DepartureAt.Month(), ticket.DepartureAt.Day(), 0, 0, 0, 0, time.UTC)
 	excludeID := id
 	exists, err := s.Repo.ExistsForUserOnDate(currentUserID, day, &excludeID)
 	if err != nil {
@@ -148,9 +148,8 @@ func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.Recomm
 		return nil, err
 	}
 
-	// Use ticket's local day for same-date matching
-	loc := t.DepartureAt.Location()
-	day := time.Date(t.DepartureAt.Year(), t.DepartureAt.Month(), t.DepartureAt.Day(), 0, 0, 0, 0, loc)
+	// Use UTC day for same-date matching to ensure consistency
+	day := time.Date(t.DepartureAt.Year(), t.DepartureAt.Month(), t.DepartureAt.Day(), 0, 0, 0, 0, time.UTC)
 
 	var candidates []tentity.TravelTicket
 	if models.IsHostel(t.Destination) {

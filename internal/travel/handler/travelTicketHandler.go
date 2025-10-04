@@ -3,6 +3,8 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"Travel_Sync/internal/travel/models"
 	tservice "Travel_Sync/internal/travel/service"
@@ -46,6 +48,12 @@ func (h *TravelTicketHandler) Create(c *gin.Context) {
 	var dto models.TravelTicketCreateDto
 	if err := c.ShouldBindJSON(&dto); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "invalid request body"})
+		return
+	}
+
+	// Validate that departure_at is in UTC format
+	if !isValidUTCTimestamp(dto.DepartureAt) {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "departure_at must be in UTC format (RFC3339 with Z suffix)"})
 		return
 	}
 
@@ -128,6 +136,13 @@ func (h *TravelTicketHandler) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "invalid request body"})
 		return
 	}
+
+	// Validate that departure_at is in UTC format if provided
+	if dto.DepartureAt != "" && !isValidUTCTimestamp(dto.DepartureAt) {
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "departure_at must be in UTC format (RFC3339 with Z suffix)"})
+		return
+	}
+
 	uid, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "unauthorized"})
@@ -201,4 +216,18 @@ func toInt64(v interface{}) int64 {
 		return int64(f)
 	}
 	return 0
+}
+
+// isValidUTCTimestamp validates that the timestamp string is in UTC format (RFC3339 with Z suffix)
+func isValidUTCTimestamp(timestamp string) bool {
+	if timestamp == "" {
+		return true // Empty is valid for optional fields
+	}
+	// Check if it ends with 'Z' (UTC indicator)
+	if !strings.HasSuffix(timestamp, "Z") {
+		return false
+	}
+	// Try to parse as RFC3339
+	_, err := time.Parse(time.RFC3339, timestamp)
+	return err == nil
 }
