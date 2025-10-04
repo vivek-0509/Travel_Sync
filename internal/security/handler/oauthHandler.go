@@ -28,7 +28,7 @@ func (h *OAuthHandler) GoogleLogin(c *gin.Context) {
 	c.SetCookie("oauth_state", state, 300, "/", "", true, true) // Secure=true for production
 	
 	// Add prompt=consent to force consent screen every time
-	url := h.CustomOAuth2Service.OAuthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline, oauth2.SetAuthURLParam("prompt", "consent"), oauth2.SetAuthURLParam("approval_prompt", "force"))
+	url := h.CustomOAuth2Service.OAuthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline, oauth2.SetAuthURLParam("prompt", "consent"))
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
