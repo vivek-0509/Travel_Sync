@@ -40,7 +40,7 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	}
 
 	code := c.Query("code")
-	jwtToken, created, err := h.CustomOAuth2Service.GoogleCallback(c.Request.Context(), code)
+	jwtToken, created, user, err := h.CustomOAuth2Service.GoogleCallback(c.Request.Context(), code)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -60,23 +60,23 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 		3600*24*8,
 	))
 
-	// Redirect to frontend success page
+	// Check if profile is complete and redirect accordingly
 	redirectURL := frontendURL + "/auth/success"
-	if created {
-		redirectURL += "?new=1"
+	if created || !h.CustomOAuth2Service.AuthService.IsProfileComplete(user) {
+		redirectURL = frontendURL + "/auth/success/newuser"
 	}
 	c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 }
 
 // Logout handler
 func (h *OAuthHandler) Logout(c *gin.Context) {
-	// Try to get JWT claims to extract access token for revocation
+	// Try to get JWT claims to extract access and refresh tokens for revocation
 	if jwtClaims, exists := c.Get("jwt_claims"); exists {
-		if claims, ok := jwtClaims.(*service.CustomClaims); ok && claims.AccessToken != "" {
-			// Revoke Google OAuth token
-			if err := h.CustomOAuth2Service.RevokeGoogleToken(c.Request.Context(), claims.AccessToken); err != nil {
+		if claims, ok := jwtClaims.(*service.CustomClaims); ok {
+			// Revoke both Google OAuth access and refresh tokens
+			if err := h.CustomOAuth2Service.RevokeGoogleToken(c.Request.Context(), claims.AccessToken, claims.RefreshToken); err != nil {
 				// Log error but don't fail logout - token might already be expired/revoked
-				fmt.Printf("Warning: Failed to revoke Google OAuth token: %v\n", err)
+				fmt.Printf("Warning: Failed to revoke Google OAuth tokens: %v\n", err)
 			}
 		}
 	}

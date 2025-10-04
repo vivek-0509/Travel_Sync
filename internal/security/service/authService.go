@@ -33,3 +33,8 @@ func (authService *AuthService) GetOrCreateUser(email string) (*entity.User, boo
     }
     return user, false, nil
 }
+
+// IsProfileComplete checks if user has completed their profile (name and phone number)
+func (authService *AuthService) IsProfileComplete(user *entity.User) bool {
+    return user.Name != "" && user.PhoneNumber != ""
+}
