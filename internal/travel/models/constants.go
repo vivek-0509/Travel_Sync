@@ -53,3 +53,8 @@ func AreNearbyHostels(a, b string) bool {
 	}
 	return IsHostel(a) && IsHostel(b)
 }
+
+// IsValidLocation checks if a location exists in any of the predefined maps
+func IsValidLocation(loc string) bool {
+	return IsHostel(loc) || IsAirportTerminal(loc) || IsRailwayStation(loc)
+}

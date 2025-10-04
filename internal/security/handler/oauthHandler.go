@@ -65,7 +65,7 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	// Check if profile is complete and redirect accordingly
 	redirectURL := frontendURL + "/auth/success"
 	if created || !h.CustomOAuth2Service.AuthService.IsProfileComplete(user) {
-		redirectURL = frontendURL + "/auth/success/newuser"
+		redirectURL = frontendURL + "/auth/success/?new=1"
 	}
 	c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 }

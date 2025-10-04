@@ -22,6 +22,14 @@ func NewTravelTicketService(repo *repository.TravelTicketRepo, userRepo *urepo.U
 }
 
 func (s *TravelTicketService) Create(userID int64, dto *models.TravelTicketCreateDto) (*tentity.TravelTicket, error) {
+	// Validate source and destination locations
+	if !models.IsValidLocation(dto.Source) {
+		return nil, errors.New("invalid source location. Please select from predefined locations")
+	}
+	if !models.IsValidLocation(dto.Destination) {
+		return nil, errors.New("invalid destination location. Please select from predefined locations")
+	}
+
 	// Enforce per-user ticket cap
 	const maxTicketsPerUser = 20
 	if count, err := s.Repo.CountByUserID(userID); err == nil {
@@ -79,6 +87,15 @@ func (s *TravelTicketService) Update(currentUserID int64, id int64, dto *models.
 	if ticket.UserID != currentUserID {
 		return nil, errors.New("forbidden")
 	}
+
+	// Validate source and destination locations if they are being updated
+	if dto.Source != "" && !models.IsValidLocation(dto.Source) {
+		return nil, errors.New("invalid source location. Please select from predefined locations")
+	}
+	if dto.Destination != "" && !models.IsValidLocation(dto.Destination) {
+		return nil, errors.New("invalid destination location. Please select from predefined locations")
+	}
+
 	ticket = mapper.ApplyUpdateDtoToEntity(dto, ticket)
 	// If departure time changed (or even if not), enforce single ticket per date (using UTC)
 	day := time.Date(ticket.DepartureAt.Year(), ticket.DepartureAt.Month(), ticket.DepartureAt.Day(), 0, 0, 0, 0, time.UTC)
