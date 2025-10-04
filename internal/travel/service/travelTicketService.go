@@ -22,15 +22,15 @@ func NewTravelTicketService(repo *repository.TravelTicketRepo, userRepo *urepo.U
 }
 
 func (s *TravelTicketService) Create(userID int64, dto *models.TravelTicketCreateDto) (*tentity.TravelTicket, error) {
-    // Enforce per-user ticket cap
-    const maxTicketsPerUser = 20
-    if count, err := s.Repo.CountByUserID(userID); err == nil {
-        if count >= maxTicketsPerUser {
-            return nil, errors.New("Please delete your non-relevant/closed tickets to make new ones")
-        }
-    } else {
-        return nil, err
-    }
+	// Enforce per-user ticket cap
+	const maxTicketsPerUser = 20
+	if count, err := s.Repo.CountByUserID(userID); err == nil {
+		if count >= maxTicketsPerUser {
+			return nil, errors.New("Please delete your non-relevant/closed tickets to make new ones")
+		}
+	} else {
+		return nil, err
+	}
 
 	user, err := s.UserRepo.GetByID(userID)
 	if err != nil {
@@ -224,19 +224,22 @@ func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.Recomm
 		// All candidates are already within the time window, so add them to group
 		group = append(group, sct)
 	}
-	
+
 	// Other alternatives
 	others := make([]models.ScoredTicket, 0)
-	
+
 	// If group size is less than 2, add those tickets to other alternatives
-	if len(group) < 2 {
-		// Add group tickets to other alternatives since group is too small
-		others = append(others, group...)
-	} else {
-		// Group is valid (>= 2), set it as BestGroup
+	if len(group) >= 2 {
 		result.BestGroup = group
+	} else {
+		// Only add to others if not BestMatch
+		for _, sct := range group {
+			if result.BestMatch == nil || sct.CandidateID != result.BestMatch.CandidateID {
+				others = append(others, sct)
+			}
+		}
 	}
-	
+
 	// Add remaining tickets to other alternatives (excluding best match and best group)
 	// Create a set of IDs that are already in best match or best group
 	excludedIDs := make(map[int64]bool)
@@ -246,7 +249,7 @@ func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.Recomm
 	for _, sct := range result.BestGroup {
 		excludedIDs[sct.CandidateID] = true
 	}
-	
+
 	// Add tickets that are not in best match or best group to alternatives
 	for _, sct := range scored {
 		if !excludedIDs[sct.CandidateID] {
