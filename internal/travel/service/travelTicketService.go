@@ -238,14 +238,20 @@ func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.Recomm
 	}
 	
 	// Add remaining tickets to other alternatives (excluding best match and best group)
+	// Create a set of IDs that are already in best match or best group
+	excludedIDs := make(map[int64]bool)
+	if result.BestMatch != nil {
+		excludedIDs[result.BestMatch.CandidateID] = true
+	}
+	for _, sct := range result.BestGroup {
+		excludedIDs[sct.CandidateID] = true
+	}
+	
+	// Add tickets that are not in best match or best group to alternatives
 	for _, sct := range scored {
-		if containsTicketID(result.BestGroup, sct.CandidateID) {
-			continue
+		if !excludedIDs[sct.CandidateID] {
+			others = append(others, sct)
 		}
-		if result.BestMatch != nil && result.BestMatch.CandidateID == sct.CandidateID {
-			continue
-		}
-		others = append(others, sct)
 	}
 	result.OtherAlternatives = others
 
