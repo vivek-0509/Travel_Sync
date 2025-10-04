@@ -26,7 +26,7 @@ func (h *OAuthHandler) GoogleLogin(c *gin.Context) {
 	state := generateRandomState()
 	// Short-lived state cookie for OAuth verification
 	c.SetCookie("oauth_state", state, 300, "/", "", true, true) // Secure=true for production
-	
+
 	// Add prompt=consent to force consent screen every time
 	url := h.CustomOAuth2Service.OAuthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline, oauth2.SetAuthURLParam("prompt", "consent"))
 	c.Redirect(http.StatusTemporaryRedirect, url)
@@ -65,7 +65,7 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 	// Check if profile is complete and redirect accordingly
 	redirectURL := frontendURL + "/auth/success"
 	if created || !h.CustomOAuth2Service.AuthService.IsProfileComplete(user) {
-		redirectURL = frontendURL + "/auth/success/newuser"
+		redirectURL = frontendURL + "/auth/success/?new=1"
 	}
 	c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 }
