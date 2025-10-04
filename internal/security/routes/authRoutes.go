@@ -17,13 +17,13 @@ func RegisterAuthRoutes(router *gin.Engine, authHandler *handler.OAuthHandler, j
 		// Public routes (no authentication required)
 		auth.GET("/google/login", authHandler.GoogleLogin)
 		auth.GET("/google/callback", authHandler.GoogleCallback)
-		auth.POST("/logout", authHandler.Logout)
 
 		// Protected routes (authentication required)
 		protected := auth.Group("/")
 		protected.Use(config.JWTMiddleware(jwtService))
 		{
 			protected.GET("/me", authHandler.GetCurrentUser)
+			protected.POST("/logout", authHandler.Logout)
 		}
 	}
 }
