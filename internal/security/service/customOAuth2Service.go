@@ -40,6 +40,12 @@ func (service *CustomOAuth2Service) GoogleCallback(ctx context.Context, code str
         return "", false, nil, fmt.Errorf("token exchange failed: %w", err)
 	}
 
+	// Debug: Log token information
+	fmt.Printf("DEBUG: Access Token: %s\n", token.AccessToken)
+	fmt.Printf("DEBUG: Refresh Token: %s\n", token.RefreshToken)
+	fmt.Printf("DEBUG: Token Type: %s\n", token.TokenType)
+	fmt.Printf("DEBUG: Expiry: %v\n", token.Expiry)
+
 	//Fetch User Info from google
 	client := service.OAuthConfig.Client(ctx, token)
     resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
@@ -85,18 +91,25 @@ func (service *CustomOAuth2Service) RevokeGoogleToken(ctx context.Context, acces
 	// Google's token revocation endpoint
 	revokeURL := "https://oauth2.googleapis.com/revoke"
 	
+	fmt.Printf("DEBUG: Revoking access token: %s\n", accessToken)
+	fmt.Printf("DEBUG: Revoking refresh token: %s\n", refreshToken)
+	
 	// Revoke access token if provided
 	if accessToken != "" {
 		if err := service.revokeSingleToken(ctx, revokeURL, accessToken); err != nil {
+			fmt.Printf("DEBUG: Failed to revoke access token: %v\n", err)
 			return fmt.Errorf("failed to revoke access token: %w", err)
 		}
+		fmt.Printf("DEBUG: Successfully revoked access token\n")
 	}
 	
 	// Revoke refresh token if provided
 	if refreshToken != "" {
 		if err := service.revokeSingleToken(ctx, revokeURL, refreshToken); err != nil {
+			fmt.Printf("DEBUG: Failed to revoke refresh token: %v\n", err)
 			return fmt.Errorf("failed to revoke refresh token: %w", err)
 		}
+		fmt.Printf("DEBUG: Successfully revoked refresh token\n")
 	}
 
 	return nil
