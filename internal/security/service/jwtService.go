@@ -24,15 +24,17 @@ func NewJWTService() *JWTService {
 
 // CustomClaims represents the JWT claims
 type CustomClaims struct {
-	UserID int64  `json:"user_id"`
-	Email  string `json:"email"`
+	UserID      int64  `json:"user_id"`
+	Email       string `json:"email"`
+	AccessToken string `json:"access_token,omitempty"` // Google OAuth access token
 	jwt.RegisteredClaims
 }
 
-func (j *JWTService) CreateJWT(userID int64, email string) (string, error) {
+func (j *JWTService) CreateJWT(userID int64, email string, accessToken string) (string, error) {
 	claims := CustomClaims{
-		UserID: userID,
-		Email:  email,
+		UserID:      userID,
+		Email:       email,
+		AccessToken: accessToken,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   email,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(192 * time.Hour)), // 8 days

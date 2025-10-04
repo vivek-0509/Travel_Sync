@@ -70,6 +70,17 @@ func (h *OAuthHandler) GoogleCallback(c *gin.Context) {
 
 // Logout handler
 func (h *OAuthHandler) Logout(c *gin.Context) {
+	// Try to get JWT claims to extract access token for revocation
+	if jwtClaims, exists := c.Get("jwt_claims"); exists {
+		if claims, ok := jwtClaims.(*service.CustomClaims); ok && claims.AccessToken != "" {
+			// Revoke Google OAuth token
+			if err := h.CustomOAuth2Service.RevokeGoogleToken(c.Request.Context(), claims.AccessToken); err != nil {
+				// Log error but don't fail logout - token might already be expired/revoked
+				fmt.Printf("Warning: Failed to revoke Google OAuth token: %v\n", err)
+			}
+		}
+	}
+
 	// Clear JWT cookie with same settings as when it was set
 	c.Header("Set-Cookie", "jwt_token=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=None")
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
