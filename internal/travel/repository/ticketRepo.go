@@ -106,6 +106,50 @@ func (r *TravelTicketRepo) GetCandidatesSameDateOutbound(destination string, day
 	return tickets, err
 }
 
+// GetCandidatesTimeWindowOutbound finds tickets for outbound trips (hostel to home) within a time window
+// that can span across dates. Uses timeWindowBefore and timeWindowAfter from the target ticket.
+func (r *TravelTicketRepo) GetCandidatesTimeWindowOutbound(destination string, targetTime time.Time, timeWindowBefore, timeWindowAfter time.Duration, excludeID int64) ([]entity.TravelTicket, error) {
+	var tickets []entity.TravelTicket
+	windowStart := targetTime.Add(-timeWindowBefore)
+	windowEnd := targetTime.Add(timeWindowAfter)
+	
+	q := r.DB
+	if models.IsAirportTerminal(destination) {
+		terminals := make([]string, 0, len(models.AirportTerminals))
+		for t := range models.AirportTerminals {
+			terminals = append(terminals, t)
+		}
+		q = q.Where("destination IN ?", terminals)
+	} else {
+		q = q.Where("destination = ?", destination)
+	}
+	err := q.Where("status = ? AND departure_at >= ? AND departure_at <= ? AND id <> ?",
+		"open", windowStart, windowEnd, excludeID).Find(&tickets).Error
+	return tickets, err
+}
+
+// GetCandidatesTimeWindowReturn finds tickets for return trips (home to hostel) within a time window
+// that can span across dates. Uses timeWindowBefore and timeWindowAfter from the target ticket.
+func (r *TravelTicketRepo) GetCandidatesTimeWindowReturn(source string, targetTime time.Time, timeWindowBefore, timeWindowAfter time.Duration, excludeID int64) ([]entity.TravelTicket, error) {
+	var tickets []entity.TravelTicket
+	windowStart := targetTime.Add(-timeWindowBefore)
+	windowEnd := targetTime.Add(timeWindowAfter)
+	
+	q := r.DB
+	if models.IsAirportTerminal(source) {
+		terminals := make([]string, 0, len(models.AirportTerminals))
+		for t := range models.AirportTerminals {
+			terminals = append(terminals, t)
+		}
+		q = q.Where("source IN ?", terminals)
+	} else {
+		q = q.Where("source = ?", source)
+	}
+	err := q.Where("status = ? AND departure_at >= ? AND departure_at <= ? AND id <> ?",
+		"open", windowStart, windowEnd, excludeID).Find(&tickets).Error
+	return tickets, err
+}
+
 // GetCandidatesSameDateReturn finds tickets for return trips (home to hostel) on the same UTC date
 // dayStart should be in UTC timezone for consistent date comparisons.
 func (r *TravelTicketRepo) GetCandidatesSameDateReturn(source string, dayStart time.Time, excludeID int64) ([]entity.TravelTicket, error) {

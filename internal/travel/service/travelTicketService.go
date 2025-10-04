@@ -148,19 +148,20 @@ func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.Recomm
 		return nil, err
 	}
 
-	// Use UTC day for same-date matching to ensure consistency
-	day := time.Date(t.DepartureAt.Year(), t.DepartureAt.Month(), t.DepartureAt.Day(), 0, 0, 0, 0, time.UTC)
+	// Calculate time windows for cross-date recommendations
+	beforeWindow := time.Duration(t.TimeDiffMins) * time.Minute
+	afterWindow := 60 * time.Minute
 
 	var candidates []tentity.TravelTicket
 	if models.IsHostel(t.Destination) {
 		// Return trip: Home → Hostel
-		candidates, err = s.Repo.GetCandidatesSameDateReturn(t.Source, day, t.ID)
+		candidates, err = s.Repo.GetCandidatesTimeWindowReturn(t.Source, t.DepartureAt, beforeWindow, afterWindow, t.ID)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		// Outbound trip: Hostel → Home
-		candidates, err = s.Repo.GetCandidatesSameDateOutbound(t.Destination, day, t.ID)
+		candidates, err = s.Repo.GetCandidatesTimeWindowOutbound(t.Destination, t.DepartureAt, beforeWindow, afterWindow, t.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -175,23 +176,9 @@ func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.Recomm
 	}
 	candidates = filteredCandidates
 
-	// Score all candidates, but only within the asymmetric time window
-	beforeWindow := time.Duration(t.TimeDiffMins) * time.Minute
-	afterWindow := 60 * time.Minute
+	// Score all candidates (time window filtering is now handled by repository)
 	scored := make([]models.ScoredTicket, 0, len(candidates))
 	for _, c := range candidates {
-		delta := c.DepartureAt.Sub(t.DepartureAt)
-		if delta <= 0 {
-			// Candidate leaves before or at the same time as target
-			if absDuration(delta) > beforeWindow {
-				continue
-			}
-		} else {
-			// Candidate leaves after target
-			if delta > afterWindow {
-				continue
-			}
-		}
 
 		score := s.scoreTicket(*t, c)
 		// fetch minimal user details for candidate
@@ -228,35 +215,29 @@ func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.Recomm
 		result.BestMatch = &scored[0]
 	}
 
-	// Build Best Group: greedy, asymmetric window (before: TimeDiffMins; after: 60m)
+	// Build Best Group: greedy selection from time-window filtered candidates
 	group := make([]models.ScoredTicket, 0, 4)
-	timeWindowBefore := beforeWindow
-	timeWindowAfter := afterWindow
 	for _, sct := range scored {
 		if len(group) >= 4 {
 			break
 		}
-		c := findCandidateByID(candidates, sct.CandidateID)
-		if c == nil {
-			continue
-		}
-		delta := c.DepartureAt.Sub(t.DepartureAt)
-		if delta <= 0 {
-			if absDuration(delta) <= timeWindowBefore {
-				group = append(group, sct)
-			}
-		} else {
-			if delta <= timeWindowAfter {
-				group = append(group, sct)
-			}
-		}
+		// All candidates are already within the time window, so add them to group
+		group = append(group, sct)
 	}
-	if len(group) >= 2 {
-		result.BestGroup = group
-	}
-
+	
 	// Other alternatives
 	others := make([]models.ScoredTicket, 0)
+	
+	// If group size is less than 2, add those tickets to other alternatives
+	if len(group) < 2 {
+		// Add group tickets to other alternatives since group is too small
+		others = append(others, group...)
+	} else {
+		// Group is valid (>= 2), set it as BestGroup
+		result.BestGroup = group
+	}
+	
+	// Add remaining tickets to other alternatives (excluding best match and best group)
 	for _, sct := range scored {
 		if containsTicketID(result.BestGroup, sct.CandidateID) {
 			continue
