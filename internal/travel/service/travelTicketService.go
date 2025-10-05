@@ -120,7 +120,7 @@ func (s *TravelTicketService) Delete(currentUserID int64, id int64) error {
 		return err
 	}
 	if ticket.UserID != currentUserID {
-		return errors.New("forbidden")
+		return errors.New("you cannot delete other user tickets")
 	}
 	return s.Repo.Delete(id)
 }

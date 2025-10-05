@@ -19,10 +19,10 @@ func RegisterUserRoutes(router *gin.Engine, userHandler *handler.UserHandler, jw
 		user.Use(middleware.GeneralRateLimiter())
 		{
 			//user.POST("", userHandler.CreateUser)
-			user.DELETE("/:id", userHandler.DeleteUser)
-			user.PUT("/:id", userHandler.UpdateUser)
+			//user.DELETE("/:id", userHandler.DeleteUser)
+			//user.PUT("/:id", userHandler.UpdateUser)
 			user.GET("/:id", userHandler.GetUserById)
-			user.GET("", userHandler.GetAllUser)
+			//user.GET("", userHandler.GetAllUser)
 		}
 	}
 }
