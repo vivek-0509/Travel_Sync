@@ -20,7 +20,7 @@ func RegisterUserRoutes(router *gin.Engine, userHandler *handler.UserHandler, jw
 		{
 			//user.POST("", userHandler.CreateUser)
 			//user.DELETE("/:id", userHandler.DeleteUser)
-			//user.PUT("/:id", userHandler.UpdateUser)
+			user.PUT("/:id", userHandler.UpdateUser)
 			user.GET("/:id", userHandler.GetUserById)
 			//user.GET("", userHandler.GetAllUser)
 		}
