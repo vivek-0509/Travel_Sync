@@ -79,11 +79,20 @@ func (h *TravelTicketHandler) GetByID(c *gin.Context) {
 }
 
 func (h *TravelTicketHandler) GetRecommendations(c *gin.Context) {
+
+	// Ownership check: user can update only their own profile
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "unauthorized"})
+		return
+	}
+	currentUserID := toInt64(uid)
+
 	id, ok := parseID(c)
 	if !ok {
 		return
 	}
-	result, err := h.Svc.RecommendForTicket(id)
+	result, err := h.Svc.RecommendForTicket(id, currentUserID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
 		return

@@ -7,6 +7,7 @@ import (
 	"Travel_Sync/internal/travel/repository"
 	urepo "Travel_Sync/internal/user/repository"
 	"errors"
+	"fmt"
 	"math"
 	"sort"
 	"time"
@@ -159,10 +160,15 @@ func (s *TravelTicketService) GetByUser(userID int64) ([]tentity.TravelTicket, e
 }
 
 // RecommendForTicket computes best match, best group, and other alternatives
-func (s *TravelTicketService) RecommendForTicket(ticketID int64) (*models.RecommendationResult, error) {
+func (s *TravelTicketService) RecommendForTicket(ticketID int64, currentUserID int64) (*models.RecommendationResult, error) {
 	t, err := s.Repo.GetByID(ticketID)
 	if err != nil {
 		return nil, err
+	}
+
+	// ✅ Ownership check: ensure current user owns this ticket
+	if t.UserID != currentUserID {
+		return nil, fmt.Errorf("unauthorized: You cannot access recommendation for others ticket")
 	}
 
 	// Calculate time windows for cross-date recommendations
