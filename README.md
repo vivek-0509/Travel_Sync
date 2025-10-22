@@ -2,6 +2,8 @@
 
 Find your travel buddy. Travel Sync lets students post upcoming trips and discover compatible co-travelers based on time, origin/destination, and preferences. It uses Google OAuth2 for login, JWT cookies for sessions, and a recommendation engine with rate limiting.
 
+LIVE LINK : https://www.travelsync.space
+
 ## What this app does
 
 - Create a travel ticket with origin, destination, departure time, empty seats, and contact.
