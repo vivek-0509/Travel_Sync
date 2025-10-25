@@ -23,7 +23,7 @@ Travel Sync helps students find compatible travel companions by intelligently ma
 
 - 🔐 **Secure Google OAuth 2.0** authentication with JWT sessions
 - 🎫 **Travel Ticket Management** - Create, update, and manage trip details
-- 🤖 **Smart Recommendation Engine** - AI-powered matching algorithm with scoring
+- 🤖 **Smart Recommendation Engine** - Implemented Greedy algorithm with scoring
 - 🛡️ **Multi-tier Rate Limiting** - Protection against abuse
 - 📱 **Real-time Status Updates** - Open/closed ticket management
 - 🔒 **Privacy-First Design** - Redacted IDs, minimal data exposure
@@ -73,8 +73,8 @@ Travel Sync helps students find compatible travel companions by intelligently ma
 
 | Category | Technology |
 |----------|-----------|
-| **Backend** | Go 1.21+, Gin Framework |
-| **Database** | PostgreSQL 13+, GORM |
+| **Backend** | Go, Gin Framework |
+| **Database** | PostgreSQL , GORM |
 | **Auth** | Google OAuth 2.0, JWT (golang-jwt) |
 | **Security** | HTTP-only Cookies, CORS, Rate Limiting |
 | **Rate Limiting** | ulule/limiter (in-memory) |
@@ -181,7 +181,7 @@ Score = (time_proximity × 0.5) +
 
 ### Prerequisites
 - Go 1.21+
-- PostgreSQL 13+
+- PostgreSQL 
 - Google OAuth credentials
 
 ### Installation
@@ -384,14 +384,7 @@ travel-sync/
 - **GORM Query Optimization** - Efficient database access
 - **Layered Architecture** - Easy horizontal scaling
 - **Auto-migrations** - Seamless schema updates
-
-**Production Recommendations:**
-- Use Redis for distributed rate limiting
-- Enable HTTPS with `Secure=true` cookies
-- Implement request logging (exclude tokens)
-- Add database connection pooling
-- Use secret manager for `JWT_SECRET`
-
+  
 ---
 
 ## 🤝 Contributing
